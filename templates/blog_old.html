@@ -1,0 +1,867 @@
+{% extends "base.html" %}
+
+{% block title %}技术博客{% endblock %}
+
+{% block content %}
+    <h1>技术博客 📝</h1>
+    <p>从GitHub仓库中自动读取Markdown文档，记录技术探索和学习心得。</p>
+
+    <!-- 博客统计 -->
+    <div class="blog-stats-section">
+        <h2>📊 博客统计</h2>
+        <div class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-articles">-</span>
+                        <span class="stat-label">技术文章</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏷️</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-categories">-</span>
+                        <span class="stat-label">文章分类</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="featured-articles">-</span>
+                        <span class="stat-label">精选文章</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📁</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-repos">-</span>
+                        <span class="stat-label">源仓库数</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选控制 -->
+    <div class="blog-controls">
+        <div class="search-container">
+            <input type="text" id="article-search" placeholder="🔍 搜索文章..." class="search-input">
+        </div>
+        <div class="filter-container">
+            <select id="category-filter" class="filter-select">
+                <option value="all">所有分类</option>
+            </select>
+            <select id="sort-filter" class="filter-select">
+                <option value="date-desc">最新发布</option>
+                <option value="date-asc">最早发布</option>
+                <option value="read-time-asc">阅读时长(短)</option>
+                <option value="read-time-desc">阅读时长(长)</option>
+                <option value="title">标题排序</option>
+            </select>
+            <button id="clear-filters" class="btn btn-small btn-secondary">清除筛选</button>
+        </div>
+    </div>
+
+    <!-- 文章列表 -->
+    <div id="articles-container" class="articles-grid">
+        <!-- 动态加载的文章将显示在这里 -->
+    </div>
+
+    <!-- 加载指示器 -->
+    <div id="loading-indicator" class="loading-indicator">
+        <div class="loading-spinner"></div>
+        <p>正在从GitHub加载文章...</p>
+    </div>
+
+    <script>
+        // 博客文章加载管理器
+        const API_BASE = '/api';
+        
+        class BlogLoader {
+            constructor() {
+                this.articles = [];
+                this.filteredArticles = [];
+                this.searchInput = document.getElementById('article-search');
+                this.categoryFilter = document.getElementById('category-filter');
+                this.sortFilter = document.getElementById('sort-filter');
+                this.clearFiltersBtn = document.getElementById('clear-filters');
+                this.container = document.getElementById('articles-container');
+                this.loadingIndicator = document.getElementById('loading-indicator');
+                
+                this.init();
+            }
+
+            async init() {
+                this.showLoading();
+                
+                try {
+                    await this.loadArticlesFromAPI();
+                    this.hideLoading();
+                    this.setupEventListeners();
+                    this.updateStats();
+                    this.renderArticles();
+                } catch (error) {
+                    console.error('初始化失败:', error);
+                    this.hideLoading();
+                    this.showErrorMessage('加载文章失败: ' + error.message);
+                }
+            }
+
+            async loadArticlesFromAPI() {
+                try {
+                    console.log('从本地API获取文章数据...');
+                    
+                    const response = await fetch(`${API_BASE}/articles`);
+                    if (!response.ok) {
+                        throw new Error(`API错误: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.message || '获取文章数据失败');
+                    }
+                    
+                    this.articles = result.data || [];
+                    this.filteredArticles = [...this.articles];
+                    
+                    console.log(`成功加载 ${this.articles.length} 篇文章`);
+                    
+                    // 更新仓库统计
+                    const repoSet = new Set(this.articles.map(article => article.repository));
+                    const totalReposElement = document.getElementById('total-repos');
+                    if (totalReposElement) totalReposElement.textContent = repoSet.size;
+                    
+                } catch (error) {
+                    console.error('加载文章失败:', error);
+                    throw error;
+                }
+            }
+
+            showLoading() {
+                if (this.loadingIndicator) {
+                    this.loadingIndicator.style.display = 'block';
+                }
+            }
+
+            hideLoading() {
+                if (this.loadingIndicator) {
+                    this.loadingIndicator.style.display = 'none';
+                }
+            }
+
+            setupEventListeners() {
+                if (this.searchInput) {
+                    this.searchInput.addEventListener('input', () => this.filterArticles());
+                }
+                
+                if (this.categoryFilter) {
+                    this.categoryFilter.addEventListener('change', () => this.filterArticles());
+                }
+                
+                if (this.sortFilter) {
+                    this.sortFilter.addEventListener('change', () => this.sortAndRender());
+                }
+                
+                if (this.clearFiltersBtn) {
+                    this.clearFiltersBtn.addEventListener('click', () => {
+                        if (this.searchInput) this.searchInput.value = '';
+                        if (this.categoryFilter) this.categoryFilter.value = 'all';
+                        if (this.sortFilter) this.sortFilter.value = 'date-desc';
+                        this.filterArticles();
+                    });
+                }
+            }
+
+            updateStats() {
+                const totalElement = document.getElementById('total-articles');
+                const categoriesElement = document.getElementById('total-categories');
+                const featuredElement = document.getElementById('featured-articles');
+                
+                if (totalElement) totalElement.textContent = this.articles.length;
+                if (featuredElement) featuredElement.textContent = this.articles.filter(a => a.featured).length;
+                
+                // 更新分类选项
+                const categories = [...new Set(this.articles.map(a => a.category))];
+                if (categoriesElement) categoriesElement.textContent = categories.length;
+                
+                // 更新分类下拉菜单
+                if (this.categoryFilter) {
+                    const currentValue = this.categoryFilter.value;
+                    this.categoryFilter.innerHTML = '<option value="all">所有分类</option>';
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        this.categoryFilter.appendChild(option);
+                    });
+                    this.categoryFilter.value = currentValue;
+                }
+            }
+
+            filterArticles() {
+                const searchTerm = this.searchInput?.value.toLowerCase() || '';
+                const selectedCategory = this.categoryFilter?.value || 'all';
+                
+                this.filteredArticles = this.articles.filter(article => {
+                    const matchesSearch = article.title.toLowerCase().includes(searchTerm) || 
+                                        article.excerpt.toLowerCase().includes(searchTerm) ||
+                                        (article.tags && article.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+                    const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
+                    
+                    return matchesSearch && matchesCategory;
+                });
+                
+                this.renderArticles();
+            }
+
+            sortAndRender() {
+                const sortBy = this.sortFilter?.value || 'date-desc';
+                
+                this.filteredArticles.sort((a, b) => {
+                    switch (sortBy) {
+                        case 'date-asc':
+                            return new Date(a.publish_date) - new Date(b.publish_date);
+                        case 'date-desc':
+                            return new Date(b.publish_date) - new Date(a.publish_date);
+                        case 'read-time-asc':
+                            return a.read_time - b.read_time;
+                        case 'read-time-desc':
+                            return b.read_time - a.read_time;
+                        case 'title-asc':
+                            return a.title.localeCompare(b.title);
+                        case 'title-desc':
+                            return b.title.localeCompare(a.title);
+                        default:
+                            return new Date(b.publish_date) - new Date(a.publish_date);
+                    }
+                });
+                
+                this.renderArticles();
+            }
+
+            renderArticles() {
+                if (!this.container) return;
+                
+                if (this.filteredArticles.length === 0) {
+                    this.container.innerHTML = `
+                        <div class="no-articles">
+                            <h3>没有找到文章</h3>
+                            <p>没有找到符合条件的文章。试试调整搜索条件或分类筛选。</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                this.container.innerHTML = this.filteredArticles.map(article => this.renderArticleCard(article)).join('');
+            }
+
+            renderArticleCard(article) {
+                const date = new Date(article.publish_date).toLocaleDateString('zh-CN');
+                const tagsHtml = article.tags && article.tags.length > 0 ? 
+                    article.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : '';
+                
+                return `
+                    <article class="article-card ${article.featured ? 'featured' : ''}">
+                        <div class="article-header">
+                            <h2 class="article-title">${article.title}</h2>
+                            <div class="article-meta">
+                                <span class="category">${article.category}</span>
+                                <span class="read-time">${article.read_time} 分钟阅读</span>
+                                <span class="publish-date">${date}</span>
+                                ${article.featured ? '<span class="featured-badge">精选</span>' : ''}
+                            </div>
+                        </div>
+                        <p class="article-excerpt">${article.excerpt}</p>
+                        ${tagsHtml ? `<div class="article-tags">${tagsHtml}</div>` : ''}
+                        <div class="article-footer">
+                            <span class="repo-info">📁 ${article.repository}</span>
+                            <div class="article-actions">
+                                <a href="${article.file_url}" target="_blank" class="btn btn-primary">阅读文章</a>
+                                <a href="${article.repository_url}" target="_blank" class="btn btn-secondary">查看仓库</a>
+                                <button onclick="window.blogLoader.shareArticle('${article.id}')" class="btn btn-outline">分享</button>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }
+
+            shareArticle(articleId) {
+                const article = this.articles.find(a => a.id === articleId);
+                if (article) {
+                    const url = article.file_url;
+                    if (navigator.share) {
+                        navigator.share({
+                            title: article.title,
+                            text: article.excerpt,
+                            url: url
+                        });
+                    } else {
+                        prompt('请复制链接:', url);
+                    }
+                }
+            }
+
+            showErrorMessage(message) {
+                if (this.container) {
+                    this.container.innerHTML = `
+                        <div class="error-message">
+                            <h3>加载失败</h3>
+                            <p>${message}</p>
+                            <div class="error-actions">
+                                <button onclick="location.reload()" class="btn btn-primary">重新加载</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // 初始化博客加载器
+        window.blogLoader = new BlogLoader();
+    </script>
+
+    <style>
+        /* 博客样式 */
+                try {
+                    // 获取文件内容
+                    const contentResponse = await fetch(file.download_url);
+                    
+                    if (!contentResponse.ok) {
+                        throw new Error(`无法下载文件: ${contentResponse.status}`);
+                    }
+                    
+                    const content = await contentResponse.text();
+                    
+                    // 解析文章
+                    const title = this.extractTitle(content, file.name);
+                    const excerpt = this.generateExcerpt(content);
+                    const category = this.inferCategory(file.path, repo.name);
+                    const tags = this.extractTags(content, repo.name);
+                    const readTime = this.estimateReadTime(content);
+                    
+                    return {
+                        id: `${repo.name}-${file.name.replace('.md', '').replace(/[^a-zA-Z0-9]/g, '-')}`,
+                        title,
+                        excerpt,
+                        content,
+                        category,
+                        tags,
+                        publish_date: repo.updated_at,
+                        read_time: readTime,
+                        featured: repo.stargazers_count > 2, // 超过2星的仓库文章设为精选
+                        repo_name: repo.name,
+                        file_path: file.path,
+                        repo_url: repo.html_url,
+                        file_url: file.html_url || `https://github.com/${this.githubUsername}/${repo.name}/blob/main/${file.path}`
+                    };
+                } catch (error) {
+                    throw new Error(`文件处理失败: ${error.message}`);
+                }
+            }
+
+            extractTitle(content, filename) {
+                const lines = content.split('\n');
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith('# ')) {
+                        return trimmed.substring(2).trim();
+                    }
+                }
+                return filename.replace('.md', '').replace(/[-_]/g, ' ');
+            }
+
+            generateExcerpt(content) {
+                const textOnly = content
+                    .split('\n')
+                    .filter(line => !line.trim().startsWith('#') && 
+                                  !line.trim().startsWith('```') && 
+                                  !line.trim().startsWith('![') &&
+                                  line.trim().length > 0)
+                    .join(' ')
+                    .replace(/[#*`\[\]]/g, '')
+                    .trim();
+                
+                return textOnly.length > 150 ? textOnly.substring(0, 150) + '...' : textOnly || '暂无摘要';
+            }
+
+            inferCategory(filePath, repoName) {
+                const pathLower = filePath.toLowerCase();
+                const repoLower = repoName.toLowerCase();
+                
+                if (pathLower.includes('tutorial') || pathLower.includes('guide')) return '教程指南';
+                if (pathLower.includes('blog') || pathLower.includes('article')) return '技术博客';
+                if (repoLower.includes('rust')) return 'Rust开发';
+                if (repoLower.includes('web') || repoLower.includes('frontend')) return 'Web开发';
+                if (repoLower.includes('backend') || repoLower.includes('server')) return '后端开发';
+                if (pathLower.includes('doc') || pathLower.includes('note')) return '技术笔记';
+                if (repoLower.includes('tool')) return '工具使用';
+                return '技术文档';
+            }
+
+            extractTags(content, repoName) {
+                const tags = [];
+                const contentLower = content.toLowerCase();
+                const repoLower = repoName.toLowerCase();
+                
+                // 从仓库名推断
+                if (repoLower.includes('rust')) tags.push('Rust');
+                if (repoLower.includes('web')) tags.push('Web');
+                if (repoLower.includes('api')) tags.push('API');
+                if (repoLower.includes('frontend')) tags.push('前端');
+                if (repoLower.includes('backend')) tags.push('后端');
+                
+                // 从内容推断
+                if (contentLower.includes('javascript')) tags.push('JavaScript');
+                if (contentLower.includes('typescript')) tags.push('TypeScript');
+                if (contentLower.includes('python')) tags.push('Python');
+                if (contentLower.includes('docker')) tags.push('Docker');
+                if (contentLower.includes('axum')) tags.push('Axum');
+                
+                return [...new Set(tags)].slice(0, 4); // 去重并限制标签数量
+            }
+
+            estimateReadTime(content) {
+                const wordCount = content.split(/\s+/).length;
+                return Math.max(1, Math.ceil(wordCount / 200)); // 假设每分钟200词
+            }
+
+            setupEventListeners() {
+                this.searchInput?.addEventListener('input', () => this.filterArticles());
+                this.categoryFilter?.addEventListener('change', () => this.filterArticles());
+                this.sortFilter?.addEventListener('change', () => this.sortAndRender());
+                this.clearFiltersBtn?.addEventListener('click', () => this.clearFilters());
+            }
+
+            updateStats() {
+                const totalElement = document.getElementById('total-articles');
+                const categoriesElement = document.getElementById('total-categories');
+                const featuredElement = document.getElementById('featured-articles');
+                
+                if (totalElement) totalElement.textContent = this.articles.length;
+                if (featuredElement) featuredElement.textContent = this.articles.filter(a => a.featured).length;
+                
+                // 更新分类选项
+                const categories = [...new Set(this.articles.map(a => a.category))];
+                if (categoriesElement) categoriesElement.textContent = categories.length;
+                
+                // 更新分类下拉菜单
+                if (this.categoryFilter) {
+                    const currentValue = this.categoryFilter.value;
+                    this.categoryFilter.innerHTML = '<option value="all">所有分类</option>';
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        this.categoryFilter.appendChild(option);
+                    });
+                    this.categoryFilter.value = currentValue;
+                }
+            }
+
+            filterArticles() {
+                const searchTerm = this.searchInput?.value.toLowerCase() || '';
+                const selectedCategory = this.categoryFilter?.value || 'all';
+                
+                this.filteredArticles = this.articles.filter(article => {
+                    const matchesSearch = article.title.toLowerCase().includes(searchTerm) || 
+                                        article.excerpt.toLowerCase().includes(searchTerm) ||
+                                        article.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                    const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
+                    
+                    return matchesSearch && matchesCategory;
+                });
+                
+                this.renderArticles();
+            }
+
+            sortAndRender() {
+                const sortBy = this.sortFilter?.value || 'date-desc';
+                
+                this.filteredArticles.sort((a, b) => {
+                    switch (sortBy) {
+                        case 'date-asc':
+                            return new Date(a.publish_date) - new Date(b.publish_date);
+                        case 'date-desc':
+                            return new Date(b.publish_date) - new Date(a.publish_date);
+                        case 'read-time-asc':
+                            return a.read_time - b.read_time;
+                        case 'read-time-desc':
+                            return b.read_time - a.read_time;
+                        case 'title':
+                            return a.title.localeCompare(b.title);
+                        default:
+                            return new Date(b.publish_date) - new Date(a.publish_date);
+                    }
+                });
+                
+                this.renderArticles();
+            }
+
+            renderArticles() {
+                if (!this.container) return;
+                
+                if (this.filteredArticles.length === 0) {
+                    this.container.innerHTML = `
+                        <div class="no-articles">
+                            <p>📝 没有找到匹配的文章</p>
+                            <p>尝试调整搜索条件或查看其他分类</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                this.container.innerHTML = this.filteredArticles.map(article => `
+                    <article class="article-card" data-category="${article.category}">
+                        <div class="article-header">
+                            ${article.featured ? '<span class="featured-badge">⭐ 精选</span>' : ''}
+                            <span class="category-badge">
+                                ${article.category}
+                            </span>
+                        </div>
+                        
+                        <h3 class="article-title">
+                            <a href="${article.file_url}" target="_blank" rel="noopener" class="article-link">
+                                ${article.title}
+                            </a>
+                        </h3>
+                        
+                        <p class="article-excerpt">${article.excerpt}</p>
+                        
+                        <div class="article-tags">
+                            ${article.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                        </div>
+                        
+                        <div class="article-meta">
+                            <span class="publish-date">📅 ${new Date(article.publish_date).toLocaleDateString('zh-CN')}</span>
+                            <span class="read-time">⏱️ ${article.read_time} 分钟阅读</span>
+                            <span class="repo-info">📁 ${article.repo_name}</span>
+                        </div>
+                        
+                        <div class="article-actions">
+                            <a href="${article.file_url}" target="_blank" rel="noopener" class="btn btn-primary btn-small">
+                                阅读原文
+                            </a>
+                            <a href="${article.repo_url}" target="_blank" rel="noopener" class="btn btn-secondary btn-small">
+                                查看仓库
+                            </a>
+                            <button class="btn btn-secondary btn-small share-btn" onclick="blogManager.shareArticle('${article.title}', '${article.file_url}')">
+                                分享
+                            </button>
+                        </div>
+                    </article>
+                `).join('');
+                
+                // 添加动画效果
+                const cards = this.container.querySelectorAll('.article-card');
+                cards.forEach((card, index) => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    }, index * 50);
+                });
+            }
+
+            clearFilters() {
+                if (this.searchInput) this.searchInput.value = '';
+                if (this.categoryFilter) this.categoryFilter.value = 'all';
+                if (this.sortFilter) this.sortFilter.value = 'date-desc';
+                this.filterArticles();
+            }
+
+            showErrorMessage(message) {
+                if (this.container) {
+                    this.container.innerHTML = `
+                        <div class="error-message">
+                            <h3>📝 无法加载文章</h3>
+                            <p>${message}</p>
+                            <div class="error-suggestions">
+                                <p><strong>建议尝试：</strong></p>
+                                <ul>
+                                    <li>使用包含技术文档的用户名：microsoft, rust-lang, vercel, facebook</li>
+                                    <li>检查用户名是否正确且有公开仓库</li>
+                                    <li>确保网络连接正常</li>
+                                    <li>等待几分钟后重试（GitHub API限制）</li>
+                                </ul>
+                            </div>
+                            <div class="error-actions">
+                                <button onclick="location.reload()" class="btn btn-primary">重新加载</button>
+                                <button onclick="blogManager.changeUser()" class="btn btn-secondary">更换用户</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            changeUser() {
+                const defaultUsers = ['microsoft', 'rust-lang', 'vercel', 'facebook', 'google', 'nodejs'];
+                const randomUser = defaultUsers[Math.floor(Math.random() * defaultUsers.length)];
+                const newUser = prompt(`请输入新的GitHub用户名 (推荐: ${defaultUsers.join(', ')}):`, randomUser);
+                if (newUser && newUser !== this.githubUsername) {
+                    this.githubUsername = newUser;
+                    this.articles = [];
+                    this.filteredArticles = [];
+                    this.showLoading();
+                    this.loadArticlesFromGitHub().then(() => {
+                        this.hideLoading();
+                        this.updateStats();
+                        this.renderArticles();
+                    });
+                }
+            }
+
+            shareArticle(title, url) {
+                if (navigator.share) {
+                    navigator.share({ title, url });
+                } else {
+                    navigator.clipboard.writeText(url).then(() => {
+                        alert('链接已复制到剪贴板');
+                    }).catch(() => {
+                        prompt('请复制链接:', url);
+                    });
+                }
+            }
+            
+            // 缓存管理方法
+            saveToCache(articles) {
+                try {
+                    const cacheData = {
+                        data: articles,
+                        timestamp: Date.now(),
+                        username: this.githubUsername
+                    };
+                    localStorage.setItem(this.CACHE_KEY, JSON.stringify(cacheData));
+                    console.log(`已缓存 ${articles.length} 篇文章`);
+                } catch (error) {
+                    console.error('保存缓存失败:', error);
+                }
+            }
+
+            getFromCache() {
+                try {
+                    const cached = localStorage.getItem(this.CACHE_KEY);
+                    if (!cached) return null;
+
+                    const cacheData = JSON.parse(cached);
+                    const now = Date.now();
+                    
+                    // 检查缓存是否过期
+                    if (now - cacheData.timestamp > this.CACHE_DURATION) {
+                        console.log('文章缓存已过期');
+                        localStorage.removeItem(this.CACHE_KEY);
+                        return null;
+                    }
+                    
+                    return cacheData.data;
+                } catch (error) {
+                    console.error('读取缓存失败:', error);
+                    return null;
+                }
+            }
+
+            clearCache() {
+                localStorage.removeItem(this.CACHE_KEY);
+                console.log('文章缓存已清除');
+            }
+
+            showCacheInfo() {
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'cache-info';
+                infoDiv.innerHTML = `
+                    <p>📚 正在显示缓存的文章内容 (用户: ${this.githubUsername})</p>
+                    <button onclick="blogManager.clearCache(); location.reload();" class="btn btn-small">刷新内容</button>
+                `;
+                infoDiv.style.cssText = `
+                    background: #e8f5e8; 
+                    border: 1px solid #4caf50; 
+                    border-radius: 8px; 
+                    padding: 12px; 
+                    margin: 16px 0; 
+                    text-align: center;
+                    color: #2e7d32;
+                `;
+                
+                this.container.insertBefore(infoDiv, this.container.firstChild);
+            }
+        }
+
+        // 全局变量供onclick使用
+        let blogManager;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            blogManager = new BlogManager();
+        });
+    </script>
+
+    <style>
+        /* 文章卡片样式 */
+        .article-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .article-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .featured-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #8b5a00;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .category-badge {
+            background: var(--primary-color-light, #e3f2fd);
+            color: var(--primary-color, #1976d2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 16px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .article-title {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            line-height: 1.4;
+        }
+
+        .article-link {
+            color: inherit;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .article-link:hover {
+            color: var(--primary-color);
+        }
+
+        .article-excerpt {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .article-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            background: var(--background-secondary, #f5f5f5);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .article-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .no-articles, .error-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 2px dashed var(--border-color);
+        }
+
+        .error-message h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .error-suggestions {
+            text-align: left;
+            background: var(--background-secondary, #f8f9fa);
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+
+        .error-suggestions ul {
+            margin: 0.5rem 0 0 1rem;
+            padding: 0;
+        }
+
+        .error-suggestions li {
+            margin-bottom: 0.5rem;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .article-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .article-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+{% endblock %}

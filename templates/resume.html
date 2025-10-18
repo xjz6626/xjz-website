@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}我的简历{% endblock %}
+
+{% block content %}
+    <h1>我的简历 📄</h1>
+    <p>一份展示我技术技能、项目经验和专业背景的详细简历。</p>
+
+    <div class="resume-header">
+        <div class="resume-basic-info">
+            <h2>👨‍💻 基本信息</h2>
+            <div class="basic-info-grid">
+                <div class="info-item">
+                    <strong>姓名:</strong> XJZ
+                </div>
+                <div class="info-item">
+                    <strong>身份:</strong> 研究生在读
+                </div>
+                <div class="info-item">
+                    <strong>GitHub:</strong> 
+                    <a href="https://github.com/xjz6626" target="_blank">@xjz6626</a>
+                </div>
+                <div class="info-item">
+                    <strong>专业方向:</strong> 计算机科学与技术
+                </div>
+                <div class="info-item">
+                    <strong>研究兴趣:</strong> 系统编程 / 性能优化
+                </div>
+                <div class="info-item">
+                    <strong>联系邮箱:</strong> 2529188496@qq.com
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="resume-section">
+        <h2>🎓 教育背景</h2>
+        <div class="education-timeline">
+            <div class="education-item">
+                <div class="education-period">2023 - 至今</div>
+                <div class="education-content">
+                    <h4>硕士研究生 - 计算机科学与技术</h4>
+                    <p class="education-school">某某大学</p>
+                    <ul>
+                        <li>专注于系统编程和性能优化研究</li>
+                        <li>深入学习并行计算和算法优化</li>
+                        <li>参与多个开源项目的开发和维护</li>
+                        <li>研究方向：高性能计算、嵌入式系统</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="education-item">
+                <div class="education-period">2019 - 2023</div>
+                <div class="education-content">
+                    <h4>学士学位 - 计算机科学与技术</h4>
+                    <p class="education-school">某某大学</p>
+                    <ul>
+                        <li>掌握扎实的计算机基础知识</li>
+                        <li>熟练掌握多种编程语言</li>
+                        <li>积极参与技术竞赛和项目实践</li>
+                        <li>培养了良好的编程习惯和工程思维</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="resume-section">
+        <h2>🛠️ 技术技能</h2>
+        <div class="skills-category">
+            <div class="skill-group">
+                <h4>编程语言</h4>
+                <div class="skill-items">
+                    <div class="skill-item">
+                        <span class="skill-name">Rust</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name">Python</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 90%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name">C/C++</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name">TypeScript</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 75%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="skill-group">
+                <h4>框架与技术</h4>
+                <div class="skill-items">
+                    <div class="skill-item">
+                        <span class="skill-name">Axum</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name">Angular</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name">VxWorks</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name">NEON优化</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 70%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="resume-section">
+        <h2>💼 项目经验</h2>
+        <div class="experience-timeline">
+            <div class="timeline-item">
+                <div class="timeline-date">2025</div>
+                <div class="timeline-content">
+                    <h4>🦀 个人网站项目</h4>
+                    <p class="project-tech">Rust, Axum, Askama, CSS3</p>
+                    <ul>
+                        <li>使用 Rust 和 Axum 框架构建现代化个人网站</li>
+                        <li>实现响应式设计，支持多种设备尺寸</li>
+                        <li>集成模板引擎和静态文件服务</li>
+                        <li>学习实践：Web开发、前端设计、用户体验</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-date">2024</div>
+                <div class="timeline-content">
+                    <h4>🧮 矩阵乘法优化研究</h4>
+                    <p class="project-tech">C/C++, NEON, 算法优化</p>
+                    <ul>
+                        <li>研究并实现多版本矩阵乘法算法优化</li>
+                        <li>深入学习ARM架构NEON向量化技术</li>
+                        <li>探索编译器优化对性能的影响</li>
+                        <li>学习收获：底层优化、性能分析、硬件理解</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-date">2024</div>
+                <div class="timeline-content">
+                    <h4>🔧 VxWorks 开发工具学习</h4>
+                    <p class="project-tech">Python, VxWorks, 自动化</p>
+                    <ul>
+                        <li>学习并开发 VxWorks 项目辅助工具</li>
+                        <li>实践自动化脚本编写和代码生成</li>
+                        <li>深入了解嵌入式系统开发流程</li>
+                        <li>学习收获：嵌入式开发、Python编程、工具链</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-date">2024</div>
+                <div class="timeline-content">
+                    <h4>📹 计算机视觉应用实践</h4>
+                    <p class="project-tech">Python, EasyOCR, 图像处理</p>
+                    <ul>
+                        <li>学习并应用OCR文字识别技术</li>
+                        <li>实现视频处理和图像拼接功能</li>
+                        <li>探索计算机视觉的实际应用场景</li>
+                        <li>学习收获：机器学习、图像处理、算法应用</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="resume-section">
+        <h2>🏆 技术亮点</h2>
+        <div class="highlights-grid">
+            <div class="highlight-item">
+                <div class="highlight-icon">🔧</div>
+                <h4>自动化专家</h4>
+                <p>擅长开发各种自动化工具，提高开发效率</p>
+            </div>
+            <div class="highlight-item">
+                <div class="highlight-icon">⚡</div>
+                <h4>性能优化</h4>
+                <p>深入理解底层优化，NEON向量化经验</p>
+            </div>
+            <div class="highlight-item">
+                <div class="highlight-icon">🖥️</div>
+                <h4>嵌入式开发</h4>
+                <p>VxWorks系统开发和调试经验</p>
+            </div>
+            <div class="highlight-item">
+                <div class="highlight-icon">🌐</div>
+                <h4>全栈能力</h4>
+                <p>从底层系统到前端应用的全栈开发</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="resume-section">
+        <h2>📊 GitHub 成就</h2>
+        <div class="github-achievements">
+            <div class="achievement-item">
+                <span class="achievement-badge">🦈</span>
+                <div>
+                    <h4>Pull Shark</h4>
+                    <p>活跃的开源贡献者</p>
+                </div>
+            </div>
+            <div class="achievement-item">
+                <span class="achievement-badge">⭐</span>
+                <div>
+                    <h4>开源项目</h4>
+                    <p>维护多个有价值的开源项目</p>
+                </div>
+            </div>
+            <div class="achievement-item">
+                <span class="achievement-badge">🔧</span>
+                <div>
+                    <h4>实用工具</h4>
+                    <p>开发实用的开发者工具</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="resume-footer">
+        <div style="text-align: center; margin: 3rem 0;">
+            <a href="#" class="btn download-btn" onclick="alert('PDF下载功能开发中...')">
+                📄 下载PDF版本
+            </a>
+            <a href="/contact" class="btn" style="margin-left: 1rem;">
+                📧 联系我
+            </a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}XJZ的网站{% endblock %}</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 XJZ 的个人网站</h1>
+            <p>用 Rust 和 Axum 构建的现代化网站</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="/">🏠 主页</a></li>
+                <li><a href="/projects">🚀 我的项目</a></li>
+                <li><a href="/blog">📝 技术博客</a></li>
+                <li><a href="/resume">📄 简历</a></li>
+                <li><a href="/contact">📧 联系我</a></li>
+                <li><a href="/about">👤 关于我</a></li>
+                <li class="nav-tools">
+                    <button id="theme-toggle" class="theme-btn" title="切换主题">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <button id="search-toggle" class="search-btn" title="搜索">
+                        <span class="search-icon">🔍</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 搜索框 -->
+        <div id="search-overlay" class="search-overlay hidden">
+            <div class="search-container">
+                <div class="search-header">
+                    <input type="text" id="search-input" placeholder="搜索项目、技能或内容..." autocomplete="off">
+                    <button id="search-close" class="search-close-btn">✕</button>
+                </div>
+                <div id="search-results" class="search-results">
+                    <div class="search-placeholder">
+                        <p>🔍 输入关键词搜索项目、技能或内容</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="fade-in">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer>
+            <p>&copy; 2025 XJZ - 由 Rust 和 Axum 强力驱动 ⚡</p>
+        </footer>
+    </div>
+
+    <script>
+        // 主题切换功能
+        class ThemeManager {
+            constructor() {
+                this.themeToggle = document.getElementById('theme-toggle');
+                this.themeIcon = document.querySelector('.theme-icon');
+                this.currentTheme = localStorage.getItem('theme') || 'light';
+                
+                this.init();
+            }
+            
+            init() {
+                this.applyTheme(this.currentTheme);
+                this.themeToggle.addEventListener('click', () => this.toggleTheme());
+            }
+            
+            toggleTheme() {
+                this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+                this.applyTheme(this.currentTheme);
+                localStorage.setItem('theme', this.currentTheme);
+            }
+            
+            applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                this.themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
+            }
+        }
+
+        // 搜索功能
+        class SearchManager {
+            constructor() {
+                this.searchToggle = document.getElementById('search-toggle');
+                this.searchOverlay = document.getElementById('search-overlay');
+                this.searchInput = document.getElementById('search-input');
+                this.searchClose = document.getElementById('search-close');
+                this.searchResults = document.getElementById('search-results');
+                
+                // 搜索数据
+                this.searchData = [
+                    { type: 'project', title: 'VxWorks Script Utils', description: 'VxWorks项目的Python自动化工具', tags: ['Python', 'VxWorks', '自动化'], url: '/projects' },
+                    { type: 'project', title: 'VideoSubtitleScreenshotStitcher', description: '视频字幕截图拼接工具', tags: ['Python', 'EasyOCR', '图像处理'], url: '/projects' },
+                    { type: 'project', title: 'E2000-memo', description: '硬件连接指导文档', tags: ['硬件', '文档', '调试'], url: '/projects' },
+                    { type: 'project', title: 'Browndust2hat', description: '游戏自动化控制项目', tags: ['Python', 'Web接口', '游戏控制'], url: '/projects' },
+                    { type: 'project', title: 'CHarbor', description: 'Angular前端项目', tags: ['Angular', 'TypeScript', '前端开发'], url: '/projects' },
+                    { type: 'project', title: '矩阵乘法运算优化', description: '包括naive,unroll,neon版本的矩阵乘法优化', tags: ['C/C++', 'NEON', '算法优化'], url: '/projects' },
+                    { type: 'skill', title: 'Rust', description: '系统编程语言', tags: ['编程语言', '系统编程'], url: '/resume' },
+                    { type: 'skill', title: 'Python', description: '通用编程语言', tags: ['编程语言', '自动化'], url: '/resume' },
+                    { type: 'skill', title: 'Angular', description: '前端框架', tags: ['前端', 'TypeScript'], url: '/resume' },
+                    { type: 'skill', title: 'NEON', description: 'ARM向量化技术', tags: ['优化', '并行计算'], url: '/resume' },
+                    { type: 'page', title: '关于我', description: '个人介绍和技术背景', tags: ['个人信息'], url: '/about' },
+                    { type: 'page', title: '联系我', description: '联系方式和合作信息', tags: ['联系方式', '合作'], url: '/contact' },
+                    { type: 'page', title: '简历', description: '教育背景和项目经验', tags: ['简历', '经验'], url: '/resume' }
+                ];
+                
+                this.init();
+            }
+            
+            init() {
+                this.searchToggle.addEventListener('click', () => this.showSearch());
+                this.searchClose.addEventListener('click', () => this.hideSearch());
+                this.searchOverlay.addEventListener('click', (e) => {
+                    if (e.target === this.searchOverlay) this.hideSearch();
+                });
+                this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+                
+                // ESC键关闭搜索
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') this.hideSearch();
+                });
+            }
+            
+            showSearch() {
+                this.searchOverlay.classList.remove('hidden');
+                this.searchInput.focus();
+            }
+            
+            hideSearch() {
+                this.searchOverlay.classList.add('hidden');
+                this.searchInput.value = '';
+                this.showPlaceholder();
+            }
+            
+            handleSearch(query) {
+                if (query.trim() === '') {
+                    this.showPlaceholder();
+                    return;
+                }
+                
+                const results = this.searchData.filter(item => 
+                    item.title.toLowerCase().includes(query.toLowerCase()) ||
+                    item.description.toLowerCase().includes(query.toLowerCase()) ||
+                    item.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+                );
+                
+                this.displayResults(results, query);
+            }
+            
+            displayResults(results, query) {
+                if (results.length === 0) {
+                    this.searchResults.innerHTML = `
+                        <div class="search-no-results">
+                            <p>😔 没有找到与 "${query}" 相关的内容</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const html = results.map(item => `
+                    <div class="search-result-item" onclick="window.location.href='${item.url}'">
+                        <div class="result-type">${this.getTypeIcon(item.type)}</div>
+                        <div class="result-content">
+                            <h4>${this.highlightText(item.title, query)}</h4>
+                            <p>${this.highlightText(item.description, query)}</p>
+                            <div class="result-tags">
+                                ${item.tags.map(tag => `<span class="result-tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                this.searchResults.innerHTML = html;
+            }
+            
+            showPlaceholder() {
+                this.searchResults.innerHTML = `
+                    <div class="search-placeholder">
+                        <p>🔍 输入关键词搜索项目、技能或内容</p>
+                    </div>
+                `;
+            }
+            
+            getTypeIcon(type) {
+                const icons = {
+                    'project': '🚀',
+                    'skill': '🛠️',
+                    'page': '📄'
+                };
+                return icons[type] || '📄';
+            }
+            
+            highlightText(text, query) {
+                if (!query) return text;
+                const regex = new RegExp(`(${query})`, 'gi');
+                return text.replace(regex, '<mark>$1</mark>');
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            new ThemeManager();
+            new SearchManager();
+        });
+    </script>
+</body>
+</html>

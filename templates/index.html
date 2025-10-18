@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}欢迎来到我的主页{% endblock %}
+
+{% block content %}
+    <h1>你好，世界！🌍</h1>
+    <p>欢迎来到我的个人网站！我是 xjz6626，一名热爱技术的开发者。这个网站使用 Rust 语言和 Axum 框架构建，展示了现代化的 Web 开发技术。</p>
+
+    <div class="features">
+        <div class="feature">
+            <span class="feature-icon">🦀</span>
+            <h3>Rust 语言</h3>
+            <p>使用安全、快速、并发的 Rust 语言构建</p>
+        </div>
+        <div class="feature">
+            <span class="feature-icon">⚡</span>
+            <h3>Axum 框架</h3>
+            <p>基于 tokio 的现代异步 Web 框架</p>
+        </div>
+        <div class="feature">
+            <span class="feature-icon">🎨</span>
+            <h3>现代设计</h3>
+            <p>响应式设计，支持各种设备和屏幕尺寸</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🛠️ 技术栈</h2>
+        <div class="skills">
+            <span class="skill-tag">Rust</span>
+            <span class="skill-tag">Python</span>
+            <span class="skill-tag">C/C++</span>
+            <span class="skill-tag">Angular</span>
+            <span class="skill-tag">TypeScript</span>
+            <span class="skill-tag">Axum</span>
+            <span class="skill-tag">Tokio</span>
+            <span class="skill-tag">Askama</span>
+            <span class="skill-tag">VxWorks</span>
+            <span class="skill-tag">EasyOCR</span>
+            <span class="skill-tag">NEON</span>
+            <span class="skill-tag">HTML5</span>
+            <span class="skill-tag">CSS3</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🚀 精选项目</h2>
+        <p>在我的开发历程中，涵盖了从系统优化到前端开发的多个领域：</p>
+        
+        <!-- 加载指示器 -->
+        <div id="projects-loading" class="loading-indicator">
+            <div class="loading-spinner"></div>
+            <p>正在加载项目...</p>
+        </div>
+        
+        <!-- 项目预览容器 -->
+        <div id="project-preview" class="project-preview" style="display: none;">
+            <!-- 动态生成的项目预览将在这里显示 -->
+        </div>
+        
+        <div style="text-align: center; margin-top: 2.5rem;">
+            <a href="/projects" class="btn">🚀 查看所有项目</a>
+            <a href="https://github.com/xjz6626" target="_blank" class="btn" style="background: #333;">
+                📖 访问我的 GitHub
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🎯 项目特色</h2>
+        <p>这个网站展示了如何使用 Rust 生态系统构建高性能的 Web 应用。通过 Axum 框架提供路由和中间件支持，使用 Askama 模板引擎渲染动态内容，并结合现代 CSS 技术创建美观的用户界面。</p>
+        
+        <div class="focus-areas" style="margin-top: 2rem;">
+            <div class="focus-item">
+                <span class="focus-icon">🔧</span>
+                <div>
+                    <h4>自动化工具</h4>
+                    <p>开发提高效率的自动化脚本</p>
+                </div>
+            </div>
+            <div class="focus-item">
+                <span class="focus-icon">🖥️</span>
+                <div>
+                    <h4>嵌入式开发</h4>
+                    <p>VxWorks 系统开发经验</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 首页项目预览加载器
+        class HomeProjectLoader {
+            constructor() {
+                this.loadingElement = document.getElementById('projects-loading');
+                this.previewElement = document.getElementById('project-preview');
+                this.init();
+            }
+
+            async init() {
+                try {
+                    await this.loadFeaturedProjects();
+                } catch (error) {
+                    console.error('加载项目失败:', error);
+                    this.showError();
+                }
+            }
+
+            async loadFeaturedProjects() {
+                try {
+                    const response = await fetch('/api/projects');
+                    if (!response.ok) {
+                        throw new Error(`API错误: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.message || '获取项目数据失败');
+                    }
+                    
+                    const projects = result.data || [];
+                    
+                    // 选择前6个项目作为精选项目
+                    const featuredProjects = projects
+                        .sort((a, b) => b.stargazers_count - a.stargazers_count)
+                        .slice(0, 6);
+                    
+                    this.renderProjects(featuredProjects);
+                    this.hideLoading();
+                    
+                } catch (error) {
+                    console.error('加载项目失败:', error);
+                    this.showError();
+                }
+            }
+
+            renderProjects(projects) {
+                if (!this.previewElement) return;
+                
+                const projectsHtml = projects.map(project => {
+                    const icon = this.getProjectIcon(project.name, project.language);
+                    const description = project.description || '暂无描述';
+                    
+                    return `
+                        <div class="preview-item">
+                            <h4>${icon} ${project.name}</h4>
+                            <p>${description}</p>
+                            <div class="preview-meta">
+                                ${project.language ? `<span class="preview-lang">${project.language}</span>` : ''}
+                                ${project.stargazers_count > 0 ? `<span class="preview-stars">⭐ ${project.stargazers_count}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                this.previewElement.innerHTML = projectsHtml;
+                this.previewElement.style.display = 'block';
+            }
+
+            getProjectIcon(name, language) {
+                const nameL = name.toLowerCase();
+                if (nameL.includes('vxworks') || nameL.includes('script')) return '🔧';
+                if (nameL.includes('matrix') || nameL.includes('math')) return '🧮';
+                if (nameL.includes('angular') || nameL.includes('frontend')) return '🅰️';
+                if (nameL.includes('video') || nameL.includes('subtitle')) return '📹';
+                if (nameL.includes('game') || nameL.includes('control')) return '🎮';
+                if (nameL.includes('doc') || nameL.includes('memo')) return '📚';
+                if (nameL.includes('web') || nameL.includes('site')) return '🌐';
+                if (nameL.includes('tool') || nameL.includes('utils')) return '🛠️';
+                
+                // 根据语言返回默认图标
+                switch (language) {
+                    case 'Python': return '🐍';
+                    case 'JavaScript': return '🟨';
+                    case 'TypeScript': return '🔷';
+                    case 'Rust': return '🦀';
+                    case 'C++': case 'C': return '⚡';
+                    case 'Go': return '🔵';
+                    default: return '📁';
+                }
+            }
+
+            hideLoading() {
+                if (this.loadingElement) {
+                    this.loadingElement.style.display = 'none';
+                }
+            }
+
+            showError() {
+                this.hideLoading();
+                if (this.previewElement) {
+                    this.previewElement.innerHTML = `
+                        <div class="preview-error">
+                            <p>😅 项目加载失败，但这些是我的主要技术领域：</p>
+                            <div class="preview-item">
+                                <h4>🔧 自动化工具开发</h4>
+                                <p>VxWorks 系统工具和 Python 自动化脚本</p>
+                            </div>
+                            <div class="preview-item">
+                                <h4>⚡ 性能优化</h4>
+                                <p>矩阵运算优化和 NEON 向量化</p>
+                            </div>
+                            <div class="preview-item">
+                                <h4>🌐 Web 开发</h4>
+                                <p>Angular 前端和 Rust 后端开发</p>
+                            </div>
+                        </div>
+                    `;
+                    this.previewElement.style.display = 'block';
+                }
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            new HomeProjectLoader();
+        });
+    </script>
+
+    <style>
+        /* 首页项目预览样式 */
+        .loading-indicator {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .preview-lang {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .preview-stars {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .preview-error {
+            text-align: center;
+            color: var(--text-light);
+        }
+
+        .tech-highlights {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .highlight-tag {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+        }
+    </style>
+{% endblock %}

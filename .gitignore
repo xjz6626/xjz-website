@@ -1,0 +1,37 @@
+# Rust编译产物
+/target
+debug/
+target/
+**/*.rs.bk
+*.pdb
+
+# 依赖缓存
+Cargo.lock
+
+# 环境变量
+.env
+.env.local
+.env.production
+
+# 日志文件
+*.log
+logs/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
+.cache/
+
+# 生产配置
+config/production.toml

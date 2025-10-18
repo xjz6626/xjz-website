@@ -1,0 +1,685 @@
+{% extends "base.html" %}
+
+{% block title %}我的项目{% endblock %}
+
+{% block content %}
+    <h1>我的项目 🚀</h1>
+    <p>这里展示了我在 GitHub 上的一些开源项目和技术探索。每个项目都体现了我在不同技术领域的学习和实践。</p>
+
+    <!-- 项目搜索和过滤区域 -->
+    <div class="project-controls">
+        <div class="search-container">
+            <input type="text" id="project-search" placeholder="🔍 搜索项目..." class="search-input">
+        </div>
+        <div class="filter-container">
+            <select id="language-filter" class="filter-select">
+                <option value="all">所有语言</option>
+            </select>
+            <select id="sort-filter" class="filter-select">
+                <option value="updated">最近更新</option>
+                <option value="stars">最多星标</option>
+                <option value="name">项目名称</option>
+                <option value="created">创建时间</option>
+            </select>
+            <button id="clear-filters" class="btn btn-small btn-secondary">清除筛选</button>
+        </div>
+    </div>
+
+    <!-- GitHub 用户统计区域 -->
+    <div class="github-stats-section">
+        <h2>📊 GitHub 活动统计</h2>
+        <div id="github-stats" class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-repos">-</span>
+                        <span class="stat-label">公开仓库</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-stars">-</span>
+                        <span class="stat-label">获得星标</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🍴</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-forks">-</span>
+                        <span class="stat-label">被Fork</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="total-followers">-</span>
+                        <span class="stat-label">关注者</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 语言统计 -->
+            <div class="language-stats">
+                <h3>💻 主要使用语言</h3>
+                <div id="language-chart" class="language-chart">
+                    <!-- JavaScript将在这里生成语言统计图 -->
+                </div>
+            </div>
+            
+            <!-- GitHub贡献图 -->
+            <div class="contribution-graph">
+                <h3>🔥 GitHub 贡献热力图</h3>
+                <div class="contribution-note">
+                    <p>📈 查看我的 <a href="https://github.com/xjz6626" target="_blank">GitHub 主页</a> 了解详细贡献历史</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GitHub 项目实时加载区域 -->
+    <div class="github-section">
+        <h2>🔥 GitHub 项目</h2>
+        <div id="github-loading" class="loading-spinner">
+            <div class="spinner"></div>
+            <p>正在从 GitHub 加载最新项目...</p>
+        </div>
+        <div id="github-projects" class="projects-grid" style="display: none;">
+            <!-- JavaScript 将在这里动态插入 GitHub 项目 -->
+        </div>
+        <div id="github-error" class="error-message" style="display: none;">
+            <p>⚠️ 无法加载 GitHub 项目，请稍后重试</p>
+        </div>
+    </div>
+
+    <!-- 项目说明 -->
+    <div class="static-section">
+        <h2>📚 项目说明</h2>
+        <div class="card">
+            <p>以下展示的是从我的GitHub仓库实时获取的项目信息。这些项目涵盖了自动化工具、嵌入式开发、前端应用、算法优化等多个技术领域。</p>
+            <div class="tech-highlights">
+                <span class="highlight-tag">🔧 自动化</span>
+                <span class="highlight-tag">🖥️ 嵌入式</span>
+                <span class="highlight-tag">🅰️ 前端</span>
+                <span class="highlight-tag">⚡ 优化</span>
+                <span class="highlight-tag">🦀 Rust</span>
+                <span class="highlight-tag">� Python</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 项目统计（动态更新） -->
+    <div class="github-stats">
+        <h2>📊 项目统计</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number" id="dynamic-total-projects">-</div>
+                <div class="stat-label">总项目数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="dynamic-total-stars">-</div>
+                <div class="stat-label">获得星标</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="dynamic-total-forks">-</div>
+                <div class="stat-label">被Fork</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="dynamic-followers">-</div>
+                <div class="stat-label">关注者</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🌟 技术关注点</h2>
+        <p>我的项目涵盖了多个技术领域，从嵌入式系统开发到前端应用，从算法优化到游戏自动化。我特别关注：</p>
+        <div class="focus-areas">
+            <div class="focus-item">
+                <span class="focus-icon">🔧</span>
+                <div>
+                    <h4>自动化工具开发</h4>
+                    <p>开发提高工作效率的自动化脚本和游戏控制工具</p>
+                </div>
+            </div>
+            <div class="focus-item">
+                <span class="focus-icon">🖥️</span>
+                <div>
+                    <h4>嵌入式系统</h4>
+                    <p>VxWorks 和其他嵌入式平台的开发经验</p>
+                </div>
+            </div>
+            <div class="focus-item">
+                <span class="focus-icon">�</span>
+                <div>
+                    <h4>算法优化</h4>
+                    <p>矩阵乘法等计算密集型算法的性能优化</p>
+                </div>
+            </div>
+            <div class="focus-item">
+                <span class="focus-icon">🅰️</span>
+                <div>
+                    <h4>前端开发</h4>
+                    <p>Angular、TypeScript等现代前端技术栈</p>
+                </div>
+            </div>
+            <div class="focus-item">
+                <span class="focus-icon">�🤖</span>
+                <div>
+                    <h4>计算机视觉</h4>
+                    <p>图像处理和OCR技术的实际应用</p>
+                </div>
+            </div>
+            <div class="focus-item">
+                <span class="focus-icon">🦀</span>
+                <div>
+                    <h4>现代语言探索</h4>
+                    <p>学习 Rust 等现代系统编程语言</p>
+                </div>
+            </div>
+            <div class="focus-item">
+                <span class="focus-icon">⚡</span>
+                <div>
+                    <h4>性能优化</h4>
+                    <p>NEON向量化和底层优化技术</p>
+                </div>
+            </div>
+            <div class="focus-item">
+                <span class="focus-icon">🎮</span>
+                <div>
+                    <h4>游戏技术</h4>
+                    <p>游戏自动化和Web界面控制技术</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 项目详情模态框 -->
+    <div id="project-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-project-title"></h3>
+                <button class="modal-close" onclick="closeProjectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-project-content">
+                    <!-- 项目详情将在这里动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 本地API配置
+        const API_BASE = '/api';
+        
+        // GitHub 项目加载管理器
+        class GitHubProjectLoader {
+            constructor() {
+                this.loadingElement = document.getElementById('github-loading');
+                this.projectsElement = document.getElementById('github-projects');
+                this.errorElement = document.getElementById('github-error');
+                this.allProjects = []; // 存储所有项目数据
+                this.filteredProjects = []; // 存储过滤后的项目
+                
+                // 初始化搜索和过滤
+                this.initializeControls();
+            }
+
+            initializeControls() {
+                const searchInput = document.getElementById('project-search');
+                const languageFilter = document.getElementById('language-filter');
+                const sortFilter = document.getElementById('sort-filter');
+                const clearButton = document.getElementById('clear-filters');
+
+                // 搜索输入事件
+                searchInput.addEventListener('input', () => {
+                    this.filterAndDisplayProjects();
+                });
+
+                // 语言过滤事件
+                languageFilter.addEventListener('change', () => {
+                    this.filterAndDisplayProjects();
+                });
+
+                // 排序事件
+                sortFilter.addEventListener('change', () => {
+                    this.filterAndDisplayProjects();
+                });
+
+                // 清除筛选
+                clearButton.addEventListener('click', () => {
+                    searchInput.value = '';
+                    languageFilter.value = 'all';
+                    sortFilter.value = 'updated';
+                    this.filterAndDisplayProjects();
+                });
+            }
+
+            async loadProjects() {
+                try {
+                    this.showLoading();
+                    
+                    console.log('从本地API获取项目数据...');
+                    
+                    // 调用本地API获取项目数据
+                    const projectsResponse = await fetch(`${API_BASE}/projects`);
+                    if (!projectsResponse.ok) {
+                        throw new Error(`API错误: ${projectsResponse.status}`);
+                    }
+                    
+                    const projectsResult = await projectsResponse.json();
+                    if (!projectsResult.success) {
+                        throw new Error(projectsResult.message || '获取项目数据失败');
+                    }
+                    
+                    // 存储项目数据
+                    this.allProjects = projectsResult.data || [];
+                    this.filteredProjects = [...this.allProjects];
+                    
+                    console.log(`成功加载 ${this.allProjects.length} 个项目`);
+                    
+                    // 更新语言过滤器选项
+                    this.updateLanguageFilter();
+                    
+                    // 加载统计信息
+                    this.loadUserStats();
+                    
+                    // 渲染项目
+                    this.displayProjects();
+                    
+                    this.showProjects();
+                } catch (error) {
+                    console.error('加载项目失败:', error);
+                    this.showError(`加载失败: ${error.message}`);
+                }
+            }
+
+            async loadUserStats() {
+                try {
+                    console.log('从本地API获取统计数据...');
+                    
+                    const statsResponse = await fetch(`${API_BASE}/stats`);
+                    if (!statsResponse.ok) {
+                        console.warn('统计数据获取失败，跳过');
+                        return;
+                    }
+                    
+                    const statsResult = await statsResponse.json();
+                    if (statsResult.success && statsResult.data) {
+                        this.displayUserStats(statsResult.data);
+                    }
+                } catch (error) {
+                    console.warn('统计数据加载失败:', error);
+                }
+            }
+
+            displayUserStats(statsData) {
+                // 更新统计显示
+                const updateStat = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) element.textContent = value || 0;
+                };
+                
+                // 更新GitHub活动统计区域（如果存在）
+                updateStat('total-repos', statsData.total_projects);
+                updateStat('total-stars', statsData.total_stars);
+                updateStat('total-forks', statsData.total_forks);
+                updateStat('total-followers', statsData.followers);
+                
+                // 更新新的动态统计区域
+                updateStat('dynamic-total-projects', statsData.total_projects);
+                updateStat('dynamic-total-stars', statsData.total_stars);
+                updateStat('dynamic-total-forks', statsData.total_forks);
+                updateStat('dynamic-followers', statsData.followers);
+            }
+
+
+
+            // 警告信息显示方法
+            showLoadingWarning() {
+                const warningDiv = document.createElement('div');
+                warningDiv.innerHTML = `
+                    <p>⚠️ 正在从后端API获取数据，请稍候...</p>
+                `;
+                warningDiv.style.cssText = `
+                    background: #fff3cd; 
+                    border: 1px solid #ffeaa7; 
+                    border-radius: 8px; 
+                    padding: 12px; 
+                    margin: 16px 0; 
+                    text-align: center;
+                `;
+                
+                this.projectsElement.insertBefore(warningDiv, this.projectsElement.firstChild);
+            }
+
+            // 直接显示项目详情，因为统计数据来自后端API
+
+
+
+            async showProjectDetails(repoName) {
+                const repo = this.allProjects.find(r => r.name === repoName);
+                if (!repo) return;
+
+                document.getElementById('modal-project-title').textContent = repo.name;
+                
+                // 直接渲染基本信息，不再调用GitHub API获取额外信息
+                this.renderBasicProjectDetails(repo);
+                document.getElementById('project-modal').style.display = 'flex';
+            }
+
+
+
+            renderBasicProjectDetails(repo) {
+                const createdDate = new Date(repo.created_at).toLocaleDateString('zh-CN');
+                const updatedDate = new Date(repo.updated_at).toLocaleDateString('zh-CN');
+
+                const modalContent = document.getElementById('modal-project-content');
+                modalContent.innerHTML = `
+                    <div class="project-detail-section">
+                        <h4>📊 项目统计</h4>
+                        <div class="project-meta-detail">
+                            <div class="meta-item">
+                                <span class="meta-value">${repo.stargazers_count}</span>
+                                <span class="meta-label">星标</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-value">${repo.forks_count}</span>
+                                <span class="meta-label">Fork</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-value">${repo.open_issues_count}</span>
+                                <span class="meta-label">Issues</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-value">${(repo.size / 1024).toFixed(1)}MB</span>
+                                <span class="meta-label">大小</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-detail-section">
+                        <h4>📝 项目描述</h4>
+                        <p>${repo.description || '暂无描述'}</p>
+                    </div>
+
+                    ${repo.topics && repo.topics.length > 0 ? `
+                    <div class="project-detail-section">
+                        <h4>🏷️ 标签</h4>
+                        <div class="project-topics-detail">
+                            ${repo.topics.map(topic => `<span class="skill-tag">${topic}</span>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${repo.language ? `
+                    <div class="project-detail-section">
+                        <h4>💻 主要语言</h4>
+                        <span class="skill-tag">${repo.language}</span>
+                    </div>
+                    ` : ''}
+
+                    <div class="project-detail-section">
+                        <h4>📅 时间信息</h4>
+                        <p><strong>创建时间:</strong> ${createdDate}</p>
+                        <p><strong>最后更新:</strong> ${updatedDate}</p>
+                        ${repo.license ? `<p><strong>许可证:</strong> ${repo.license.name}</p>` : ''}
+                    </div>
+
+                    <div class="project-detail-section">
+                        <div class="project-links">
+                            <a href="${repo.html_url}" target="_blank" class="btn">
+                                📖 在 GitHub 上查看
+                            </a>
+                            ${repo.homepage ? `<a href="${repo.homepage}" target="_blank" class="btn btn-secondary">🚀 访问项目主页</a>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 更新语言过滤器选项
+            updateLanguageFilter() {
+                const languageFilter = document.getElementById('language-filter');
+                const languages = [...new Set(this.allProjects.map(repo => repo.language).filter(Boolean))];
+                
+                // 清除现有选项（除了"所有语言"）
+                while (languageFilter.children.length > 1) {
+                    languageFilter.removeChild(languageFilter.lastChild);
+                }
+                
+                // 添加语言选项
+                languages.sort().forEach(language => {
+                    const option = document.createElement('option');
+                    option.value = language;
+                    option.textContent = language;
+                    languageFilter.appendChild(option);
+                });
+            }
+
+            filterAndDisplayProjects() {
+                const searchTerm = document.getElementById('project-search').value.toLowerCase();
+                const selectedLanguage = document.getElementById('language-filter').value;
+                const sortBy = document.getElementById('sort-filter').value;
+
+                // 搜索过滤
+                this.filteredProjects = this.allProjects.filter(repo => {
+                    const matchesSearch = searchTerm === '' || 
+                        repo.name.toLowerCase().includes(searchTerm) ||
+                        (repo.description && repo.description.toLowerCase().includes(searchTerm)) ||
+                        (repo.topics && repo.topics.some(topic => topic.toLowerCase().includes(searchTerm)));
+                    
+                    const matchesLanguage = selectedLanguage === 'all' || repo.language === selectedLanguage;
+                    
+                    return matchesSearch && matchesLanguage;
+                });
+
+                // 排序
+                this.sortProjects(sortBy);
+                
+                // 显示结果
+                this.displayProjects();
+            }
+
+            sortProjects(sortBy) {
+                this.filteredProjects.sort((a, b) => {
+                    switch (sortBy) {
+                        case 'stars':
+                            return b.stargazers_count - a.stargazers_count;
+                        case 'name':
+                            return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                        case 'created':
+                            return new Date(b.created_at) - new Date(a.created_at);
+                        case 'updated':
+                        default:
+                            return new Date(b.updated_at) - new Date(a.updated_at);
+                    }
+                });
+            }
+
+            displayProjects() {
+                if (this.filteredProjects.length === 0) {
+                    this.showNoResults();
+                    return;
+                }
+
+                // 显示结果数量
+                this.showResultsCount();
+                
+                // 渲染项目
+                this.renderProjects(this.filteredProjects);
+            }
+
+            showNoResults() {
+                this.projectsElement.innerHTML = `
+                    <div class="no-results">
+                        <h3>🔍 没有找到匹配的项目</h3>
+                        <p>尝试调整搜索条件或筛选器</p>
+                        <button onclick="document.getElementById('clear-filters').click()" class="btn btn-small">
+                            清除筛选条件
+                        </button>
+                    </div>
+                `;
+            }
+
+            showResultsCount() {
+                const countElement = document.querySelector('.results-count');
+                if (countElement) {
+                    countElement.remove();
+                }
+                
+                const count = document.createElement('div');
+                count.className = 'results-count';
+                count.textContent = `找到 ${this.filteredProjects.length} 个项目`;
+                this.projectsElement.parentNode.insertBefore(count, this.projectsElement);
+            }
+
+            renderProjects(repos) {
+                this.projectsElement.innerHTML = repos.map(repo => this.createProjectCard(repo)).join('');
+            }
+
+            createProjectCard(repo) {
+                const language = repo.language || 'Unknown';
+                const description = repo.description || '暂无描述';
+                const updatedDate = new Date(repo.updated_at).toLocaleDateString('zh-CN');
+                const topics = repo.topics || [];
+                
+                return `
+                    <div class="project-card github-project">
+                        <div class="project-header">
+                            <h3>
+                                <span class="project-icon">${this.getLanguageIcon(language)}</span>
+                                ${repo.name}
+                            </h3>
+                            <div class="project-meta">
+                                <span class="language">${language}</span>
+                                <span class="stars">${repo.stargazers_count}</span>
+                                <span class="forks">${repo.forks_count}</span>
+                            </div>
+                        </div>
+                        <p class="project-description">${description}</p>
+                        ${topics && topics.length > 0 ? `
+                        <div class="project-skills">
+                            ${topics.slice(0, 5).map(topic => `<span class="skill-tag">${topic}</span>`).join('')}
+                        </div>
+                        ` : ''}
+                        <div class="project-footer">
+                            <span class="update-time">📅 ${updatedDate}</span>
+                            ${repo.homepage ? `<span class="homepage-link">🔗 <a href="${repo.homepage}" target="_blank">演示</a></span>` : ''}
+                        </div>
+                        <div class="project-links">
+                            <a href="${repo.html_url}" target="_blank" class="btn btn-small btn-primary">
+                                查看代码
+                            </a>
+                            <button onclick="showProjectDetails('${repo.name}')" class="btn btn-small btn-secondary">
+                                详细信息
+                            </button>
+                            ${repo.homepage ? `<a href="${repo.homepage}" target="_blank" class="btn btn-small btn-secondary">访问项目</a>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            getLanguageIcon(language) {
+                const icons = {
+                    'Python': '🐍',
+                    'JavaScript': '🟨',
+                    'TypeScript': '🔷',
+                    'Rust': '🦀',
+                    'Go': '🐹',
+                    'Java': '☕',
+                    'C++': '⚡',
+                    'C': '🔧',
+                    'HTML': '🌐',
+                    'CSS': '🎨',
+                    'Shell': '🐚',
+                    'Vue': '💚',
+                    'React': '⚛️',
+                    'Angular': '🅰️'
+                };
+                return icons[language] || '📄';
+            }
+
+            showLoading() {
+                this.loadingElement.style.display = 'block';
+                this.projectsElement.style.display = 'none';
+                this.errorElement.style.display = 'none';
+            }
+
+            showProjects() {
+                this.loadingElement.style.display = 'none';
+                this.projectsElement.style.display = 'grid';
+                this.errorElement.style.display = 'none';
+            }
+
+            showError() {
+                this.loadingElement.style.display = 'none';
+                this.projectsElement.style.display = 'none';
+                this.errorElement.style.display = 'block';
+            }
+        }
+
+        // 页面加载完成后启动
+        document.addEventListener('DOMContentLoaded', () => {
+            const loader = new GitHubProjectLoader();
+            loader.loadProjects();
+            
+            // 将实例设置为全局变量，以便模态框使用
+            window.githubLoader = loader;
+        });
+
+        // 全局模态框控制函数
+        function showProjectDetails(repoName) {
+            if (window.githubLoader) {
+                window.githubLoader.showProjectDetails(repoName);
+            }
+        }
+
+        function closeProjectModal() {
+            document.getElementById('project-modal').style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('project-modal');
+            if (e.target === modal) {
+                closeProjectModal();
+            }
+        });
+
+        // ESC键关闭模态框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeProjectModal();
+            }
+        });
+    </script>
+
+    <style>
+        /* 技术标签高亮样式 */
+        .tech-highlights {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .highlight-tag {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .highlight-tag:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}技术博客{% endblock %}
+
+{% block content %}
+    <h1>技术博客 📝</h1>
+    <p>记录我在技术探索路上的思考、实践和总结。涵盖Web开发、系统设计、编程语言等多个领域的深度文章。</p>
+
+    <!-- 博客统计区域 -->
+    <div class="blog-stats-section">
+        <h2>📊 博客统计</h2>
+        <div class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ total_articles }}</span>
+                        <span class="stat-label">技术文章</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏷️</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ categories.len() }}</span>
+                        <span class="stat-label">文章分类</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <span class="stat-number">2</span>
+                        <span class="stat-label">精选文章</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-content">
+                        <span class="stat-number">19</span>
+                        <span class="stat-label">总阅读时长(分钟)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选控制 -->
+    <div class="blog-controls">
+        <div class="search-container">
+            <input type="text" id="article-search" placeholder="🔍 搜索文章..." class="search-input">
+        </div>
+        <div class="filter-container">
+            <select id="category-filter" class="filter-select">
+                <option value="all">所有分类</option>
+                {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+            <select id="sort-filter" class="filter-select">
+                <option value="date-desc">最新发布</option>
+                <option value="date-asc">最早发布</option>
+                <option value="read-time-asc">阅读时长(短)</option>
+                <option value="read-time-desc">阅读时长(长)</option>
+                <option value="title">标题排序</option>
+            </select>
+            <button id="featured-only" class="btn btn-small btn-secondary">仅显示精选</button>
+            <button id="clear-filters" class="btn btn-small btn-secondary">清除筛选</button>
+        </div>
+    </div>
+
+    <!-- 文章列表 -->
+    <div id="articles-container" class="articles-grid">
+        {% if articles.is_empty() %}
+            <div class="no-articles">
+                <p>📝 暂无文章</p>
+                <p>更多精彩内容正在准备中...</p>
+            </div>
+        {% else %}
+            {% for article in articles %}
+                <article class="article-card"
+                         data-category="{{ article.category }}"
+                         data-read-time="{{ article.read_time }}"
+                         data-date="{{ article.publish_date }}"
+                         data-title="{{ article.title }}"
+                         data-featured="{{ article.featured }}">
+                    
+                    <div class="article-header">
+                        {% if article.featured %}
+                            <span class="featured-badge">⭐ 精选</span>
+                        {% endif %}
+                        <span class="category-badge" data-category="{{ article.category }}">
+                            {{ article.category }}
+                        </span>
+                    </div>
+
+                    <h3 class="article-title">
+                        <a href="/blog/{{ article.id }}" class="article-link">
+                            {{ article.title }}
+                        </a>
+                    </h3>
+
+                    <p class="article-excerpt">{{ article.excerpt }}</p>
+
+                    <div class="article-tags">
+                        {% for tag in article.tags %}
+                            <span class="tag">#{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="article-meta">
+                        <span class="publish-date">📅 {{ article.publish_date }}</span>
+                        <span class="read-time">⏱️ {{ article.read_time }} 分钟阅读</span>
+                    </div>
+
+                    <div class="article-actions">
+                        <a href="/blog/{{ article.id }}" class="btn btn-primary btn-small">
+                            阅读全文
+                        </a>
+                        <button class="btn btn-secondary btn-small share-btn" 
+                                data-title="{{ article.title }}"
+                                data-url="/blog/{{ article.id }}">
+                            分享
+                        </button>
+                    </div>
+                </article>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- 加载指示器 -->
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>正在加载文章...</p>
+    </div>
+
+    <script>
+        // 博客文章管理器
+        class BlogManager {
+            constructor() {
+                this.articles = Array.from(document.querySelectorAll('.article-card'));
+                this.searchInput = document.getElementById('article-search');
+                this.categoryFilter = document.getElementById('category-filter');
+                this.sortFilter = document.getElementById('sort-filter');
+                this.featuredOnlyBtn = document.getElementById('featured-only');
+                this.clearFiltersBtn = document.getElementById('clear-filters');
+                this.showFeaturedOnly = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.searchInput?.addEventListener('input', () => this.filterArticles());
+                this.categoryFilter?.addEventListener('change', () => this.filterArticles());
+                this.sortFilter?.addEventListener('change', () => this.sortArticles());
+                this.featuredOnlyBtn?.addEventListener('click', () => this.toggleFeaturedOnly());
+                this.clearFiltersBtn?.addEventListener('click', () => this.clearAllFilters());
+                
+                // 初始排序
+                this.sortArticles();
+                
+                // 分享按钮事件
+                document.querySelectorAll('.share-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.shareArticle(e));
+                });
+            }
+
+            filterArticles() {
+                const searchTerm = this.searchInput.value.toLowerCase();
+                const selectedCategory = this.categoryFilter.value;
+                
+                this.articles.forEach(article => {
+                    const title = article.querySelector('.article-title').textContent.toLowerCase();
+                    const excerpt = article.querySelector('.article-excerpt').textContent.toLowerCase();
+                    const category = article.dataset.category;
+                    const featured = article.dataset.featured === 'true';
+                    
+                    const matchesSearch = title.includes(searchTerm) || excerpt.includes(searchTerm);
+                    const matchesCategory = selectedCategory === 'all' || category === selectedCategory;
+                    const matchesFeatured = !this.showFeaturedOnly || featured;
+                    
+                    if (matchesSearch && matchesCategory && matchesFeatured) {
+                        article.style.display = 'block';
+                        article.style.animation = 'fadeIn 0.3s ease-in';
+                    } else {
+                        article.style.display = 'none';
+                    }
+                });
+            }
+
+            sortArticles() {
+                const sortBy = this.sortFilter.value;
+                const container = document.getElementById('articles-container');
+                
+                const sorted = [...this.articles].sort((a, b) => {
+                    switch (sortBy) {
+                        case 'date-asc':
+                            return new Date(a.dataset.date) - new Date(b.dataset.date);
+                        case 'date-desc':
+                            return new Date(b.dataset.date) - new Date(a.dataset.date);
+                        case 'read-time-asc':
+                            return parseInt(a.dataset.readTime) - parseInt(b.dataset.readTime);
+                        case 'read-time-desc':
+                            return parseInt(b.dataset.readTime) - parseInt(a.dataset.readTime);
+                        case 'title':
+                            return a.dataset.title.localeCompare(b.dataset.title);
+                        default:
+                            return new Date(b.dataset.date) - new Date(a.dataset.date);
+                    }
+                });
+                
+                // 重新排列DOM元素
+                sorted.forEach(article => container.appendChild(article));
+            }
+
+            toggleFeaturedOnly() {
+                this.showFeaturedOnly = !this.showFeaturedOnly;
+                this.featuredOnlyBtn.textContent = this.showFeaturedOnly ? '显示全部' : '仅显示精选';
+                this.featuredOnlyBtn.classList.toggle('active', this.showFeaturedOnly);
+                this.filterArticles();
+            }
+
+            clearAllFilters() {
+                this.searchInput.value = '';
+                this.categoryFilter.value = 'all';
+                this.sortFilter.value = 'date-desc';
+                this.showFeaturedOnly = false;
+                this.featuredOnlyBtn.textContent = '仅显示精选';
+                this.featuredOnlyBtn.classList.remove('active');
+                this.filterArticles();
+                this.sortArticles();
+            }
+
+            shareArticle(event) {
+                const btn = event.target;
+                const title = btn.dataset.title;
+                const url = window.location.origin + btn.dataset.url;
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: title,
+                        url: url
+                    });
+                } else {
+                    // 备用方案：复制到剪贴板
+                    navigator.clipboard.writeText(url).then(() => {
+                        btn.textContent = '已复制';
+                        setTimeout(() => {
+                            btn.textContent = '分享';
+                        }, 2000);
+                    });
+                }
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            new BlogManager();
+            
+            // 添加进入动画
+            const cards = document.querySelectorAll('.article-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+
+    <style>
+        /* 文章卡片初始状态（用于动画） */
+        .article-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .no-articles {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 2px dashed var(--border-color);
+        }
+
+        .featured-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #8b5a00;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .article-link {
+            color: inherit;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .article-link:hover {
+            color: var(--primary-color);
+        }
+    </style>
+{% endblock %}

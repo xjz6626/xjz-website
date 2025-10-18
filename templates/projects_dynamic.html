@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}我的项目{% endblock %}
+
+{% block content %}
+    <h1>我的项目 🚀</h1>
+    <p>这里展示了我在 GitHub 上的一些开源项目和技术探索。每个项目都体现了我在不同技术领域的学习和实践。</p>
+
+    <!-- GitHub 用户统计区域 -->
+    <div class="github-stats-section">
+        <h2>📊 GitHub 活动统计</h2>
+        <div id="github-stats" class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ total_repos }}</span>
+                        <span class="stat-label">展示项目</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ total_stars }}</span>
+                        <span class="stat-label">获得星标</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🍴</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ total_forks }}</span>
+                        <span class="stat-label">项目分叉</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💻</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ unique_languages.len() }}</span>
+                        <span class="stat-label">编程语言</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 项目搜索和过滤区域 -->
+    <div class="project-controls">
+        <div class="search-container">
+            <input type="text" id="project-search" placeholder="🔍 搜索项目..." class="search-input">
+        </div>
+        <div class="filter-container">
+            <select id="language-filter" class="filter-select">
+                <option value="all">所有语言</option>
+                {% for lang in unique_languages %}
+                    <option value="{{ lang }}">{{ lang }}</option>
+                {% endfor %}
+            </select>
+            <select id="sort-filter" class="filter-select">
+                <option value="updated">最近更新</option>
+                <option value="stars">最多星标</option>
+                <option value="name">项目名称</option>
+                <option value="created">创建时间</option>
+            </select>
+            <button id="clear-filters" class="btn btn-small btn-secondary">清除筛选</button>
+        </div>
+    </div>
+
+    <!-- 项目展示区域 -->
+    <div id="projects-container" class="projects-grid">
+        {% if repos.is_empty() %}
+            <div class="no-projects">
+                <p>🔄 正在加载项目数据...</p>
+                <p>如果持续显示此消息，可能是GitHub API访问受限。</p>
+            </div>
+        {% else %}
+            {% for repo in repos %}
+                <div class="project-card" 
+                     data-language="{{ repo.language.as_ref().unwrap_or(&String::from("Unknown")) }}"
+                     data-stars="{{ repo.stargazers_count }}"
+                     data-updated="{{ repo.updated_at }}"
+                     data-created="{{ repo.created_at }}"
+                     data-name="{{ repo.name }}">
+                    
+                    <div class="project-header">
+                        <h3 class="project-title">
+                            <a href="{{ repo.html_url }}" target="_blank" rel="noopener">
+                                {{ repo.name }}
+                            </a>
+                        </h3>
+                        {% if repo.language.is_some() %}
+                            <span class="language-badge" data-language="{{ repo.language.as_ref().unwrap() }}">
+                                {{ repo.language.as_ref().unwrap() }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    {% if repo.description.is_some() %}
+                        <p class="project-description">{{ repo.description.as_ref().unwrap() }}</p>
+                    {% else %}
+                        <p class="project-description">暂无描述</p>
+                    {% endif %}
+
+                    <div class="project-stats">
+                        <span class="stat">
+                            <span class="stat-icon">⭐</span>
+                            <span class="stat-value">{{ repo.stargazers_count }}</span>
+                        </span>
+                        <span class="stat">
+                            <span class="stat-icon">🍴</span>
+                            <span class="stat-value">{{ repo.forks_count }}</span>
+                        </span>
+                        {% if repo.size > 0 %}
+                            <span class="stat">
+                                <span class="stat-icon">📦</span>
+                                <span class="stat-value">{{ repo.size }} KB</span>
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="update-time">
+                            📅 更新于 {{ repo.updated_at }}
+                        </span>
+                    </div>
+
+                    <div class="project-actions">
+                        <a href="{{ repo.html_url }}" 
+                           target="_blank" 
+                           rel="noopener" 
+                           class="btn btn-primary btn-small">
+                            查看代码
+                        </a>
+                        {% if repo.homepage.is_some() && !repo.homepage.as_ref().unwrap().is_empty() %}
+                            <a href="{{ repo.homepage.as_ref().unwrap() }}" 
+                               target="_blank" 
+                               rel="noopener" 
+                               class="btn btn-secondary btn-small">
+                                访问网站
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- 项目加载指示器 -->
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>正在加载项目数据...</p>
+    </div>
+
+    <script>
+        // 项目筛选和搜索功能
+        class ProjectManager {
+            constructor() {
+                this.projects = Array.from(document.querySelectorAll('.project-card'));
+                this.searchInput = document.getElementById('project-search');
+                this.languageFilter = document.getElementById('language-filter');
+                this.sortFilter = document.getElementById('sort-filter');
+                this.clearButton = document.getElementById('clear-filters');
+                
+                this.init();
+            }
+
+            init() {
+                this.searchInput?.addEventListener('input', () => this.filterProjects());
+                this.languageFilter?.addEventListener('change', () => this.filterProjects());
+                this.sortFilter?.addEventListener('change', () => this.sortProjects());
+                this.clearButton?.addEventListener('click', () => this.clearFilters());
+                
+                // 初始排序
+                this.sortProjects();
+            }
+
+            filterProjects() {
+                const searchTerm = this.searchInput.value.toLowerCase();
+                const selectedLanguage = this.languageFilter.value;
+                
+                this.projects.forEach(project => {
+                    const title = project.querySelector('.project-title').textContent.toLowerCase();
+                    const description = project.querySelector('.project-description').textContent.toLowerCase();
+                    const language = project.dataset.language;
+                    
+                    const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+                    const matchesLanguage = selectedLanguage === 'all' || language === selectedLanguage;
+                    
+                    if (matchesSearch && matchesLanguage) {
+                        project.style.display = 'block';
+                        project.style.animation = 'fadeIn 0.3s ease-in';
+                    } else {
+                        project.style.display = 'none';
+                    }
+                });
+            }
+
+            sortProjects() {
+                const sortBy = this.sortFilter.value;
+                const container = document.getElementById('projects-container');
+                
+                const sorted = [...this.projects].sort((a, b) => {
+                    switch (sortBy) {
+                        case 'stars':
+                            return parseInt(b.dataset.stars) - parseInt(a.dataset.stars);
+                        case 'name':
+                            return a.dataset.name.localeCompare(b.dataset.name);
+                        case 'created':
+                            return new Date(b.dataset.created) - new Date(a.dataset.created);
+                        case 'updated':
+                        default:
+                            return new Date(b.dataset.updated) - new Date(a.dataset.updated);
+                    }
+                });
+                
+                // 重新排列DOM元素
+                sorted.forEach(project => container.appendChild(project));
+            }
+
+            clearFilters() {
+                this.searchInput.value = '';
+                this.languageFilter.value = 'all';
+                this.sortFilter.value = 'updated';
+                this.filterProjects();
+                this.sortProjects();
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            new ProjectManager();
+            
+            // 添加进入动画
+            const cards = document.querySelectorAll('.project-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+
+    <style>
+        /* 项目卡片初始状态（用于动画） */
+        .project-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* 加载动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .no-projects {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 2px dashed var(--border-color);
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+{% endblock %}
