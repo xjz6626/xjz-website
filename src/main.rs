@@ -274,6 +274,12 @@ where
 // === 主函数: 程序入口 ===
 #[tokio::main]
 async fn main() {
+    // 从环境变量读取端口，默认为8181
+    let port = std::env::var("PORT")
+        .unwrap_or_else(|_| "8181".to_string())
+        .parse::<u16>()
+        .unwrap_or(8181);
+
     // 设置静态文件服务，它会托管 `public` 文件夹下的所有内容
     let assets_service = ServeDir::new("public");
 
@@ -295,7 +301,7 @@ async fn main() {
         .fallback_service(assets_service);
 
     // 绑定端口并启动服务
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
     println!("🚀 服务已启动，请访问 http://{}", addr);
 
     let listener = TcpListener::bind(&addr).await.unwrap();

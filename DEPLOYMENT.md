@@ -49,7 +49,7 @@ Type=simple
 User=fedora
 WorkingDirectory=/home/fedora/xjz-website
 Environment=RUST_LOG=info
-Environment=PORT=3000
+Environment=PORT=8181
 Environment=HOST=127.0.0.1
 ExecStart=/home/fedora/xjz-website/target/release/xjz_website
 Restart=always
@@ -75,7 +75,7 @@ sudo systemctl status xjz-website
 
 ```bash
 # 开放端口（如果使用防火墙）
-sudo firewall-cmd --permanent --add-port=3000/tcp
+sudo firewall-cmd --permanent --add-port=8181/tcp
 sudo firewall-cmd --reload
 
 # 或者允许HTTP/HTTPS（推荐通过反向代理）
@@ -160,7 +160,7 @@ URL: yourdomain.com/api/*
 ```bash
 # 获取Cloudflare IP列表并配置防火墙（可选）
 curl -s https://www.cloudflare.com/ips-v4 | while read ip; do
-    sudo firewall-cmd --permanent --add-rich-rule="rule family='ipv4' source address='$ip' port protocol='tcp' port='3000' accept"
+    sudo firewall-cmd --permanent --add-rich-rule="rule family='ipv4' source address='$ip' port protocol='tcp' port='8181' accept"
 done
 
 sudo firewall-cmd --reload
@@ -194,7 +194,7 @@ sudo systemctl restart xjz-website
 sudo systemctl status xjz-website
 
 # 检查端口监听
-sudo ss -tlnp | grep :3000
+sudo ss -tlnp | grep :8181
 
 # 检查进程
 ps aux | grep xjz_website

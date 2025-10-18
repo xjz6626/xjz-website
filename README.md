@@ -41,7 +41,7 @@ cargo run
 
 3. 访问网站
 ```
-http://localhost:3000
+http://localhost:8181
 ```
 
 ## API端点
@@ -73,7 +73,7 @@ cargo build --release
 
 ### 服务配置
 
-- **端口**: 3000（默认）
+- **端口**: 8181（默认）
 - **绑定地址**: 127.0.0.1（通过Cloudflare代理）
 - **SSL**: 由Cloudflare提供
 - **缓存**: Cloudflare边缘缓存

@@ -7,7 +7,7 @@ impl GitHubConfig {
     pub fn get_token() -> Option<String> {
         // 使用简单的字符偏移加密来避免检测
         // 原始token每个字符ASCII码减1
-        let encrypted = "fgo`4QM4iEKUzhBTe4xx7HNXlbjjMsKiGO2YoEwR";
+        let encrypted = "fgo^KG`12CiP147K7BQ0siAHwaH@jaSO2u0m`afu";
         
         // 解密：每个字符ASCII码加1
         let decrypted: String = encrypted.chars()

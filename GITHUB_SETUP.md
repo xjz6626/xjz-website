@@ -49,8 +49,8 @@ API限制: 5000次/小时
 
 配置完成后，测试API：
 ```bash
-curl http://127.0.0.1:3000/api/update
-curl http://127.0.0.1:3000/api/stats
+curl http://127.0.0.1:8181/api/update
+curl http://127.0.0.1:8181/api/stats
 ```
 
 应该能看到正确的项目数据而不是错误信息。
