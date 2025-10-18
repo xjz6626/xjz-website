@@ -30,21 +30,16 @@
 
 1. 克隆项目
 ```bash
-git clone <repository-url>
-cd xjz_website
+git clone https://github.com/xjz6626/xjz-website.git
+cd xjz-website
 ```
 
-2. 配置GitHub Token (可选，用于API访问)
-```bash
-export GITHUB_TOKEN=your_github_token
-```
-
-3. 运行项目
+2. 运行项目
 ```bash
 cargo run
 ```
 
-4. 访问网站
+3. 访问网站
 ```
 http://localhost:3000
 ```
@@ -63,24 +58,25 @@ http://localhost:3000
 
 ## 部署
 
-### 生产环境构建
+### Fedora + Cloudflare 部署
+
+项目针对Fedora服务器和Cloudflare CDN进行了优化配置。
 
 ```bash
+# 在Fedora服务器上
+git clone https://github.com/xjz6626/xjz-website.git
+cd xjz-website
 cargo build --release
 ```
 
-### 环境变量
+详细部署步骤请参考 `DEPLOYMENT.md`
 
-- `GITHUB_TOKEN`: GitHub API访问令牌（可选）
-- `PORT`: 服务器端口（默认3000）
-- `HOST`: 绑定地址（默认0.0.0.0）
+### 服务配置
 
-### 服务器部署
-
-1. 上传构建产物到服务器
-2. 配置反向代理（如Nginx）
-3. 设置systemd服务（可选）
-4. 启动应用
+- **端口**: 3000（默认）
+- **绑定地址**: 127.0.0.1（通过Cloudflare代理）
+- **SSL**: 由Cloudflare提供
+- **缓存**: Cloudflare边缘缓存
 
 ## 项目结构
 
