@@ -1,14 +1,39 @@
 [package]
 name = "xjz_website"
 version = "0.1.0"
-edition = "2024"
+edition = "2024" # 保持或更新为你使用的 Rust edition
 
 [dependencies]
+# Web 框架和异步运行时
+axum = { version = "0.8.6", features = ["multipart"] } # 确保开启 multipart 功能以处理文件上传
+tokio = { version = "1.48.0", features = ["full"] } # 确保开启 full 功能
+tower-http = { version = "0.6.6", features = ["fs"] } # 用于静态文件服务
+
+# 模板引擎
 askama = "0.14.0"
-axum = "0.8.6"
-tokio = { version = "1.48.0", features = ["full"] }
-tower-http = { version = "0.6.6", features = ["fs"] }
+
+# HTTP 客户端 (用于 GitHub API)
 reqwest = { version = "0.12", features = ["json"] }
+
+# 序列化/反序列化
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# 时间处理
 chrono = { version = "0.4", features = ["serde"] }
+
+# --- 新增工具依赖 ---
+# 图像处理
+image = "0.25" # 用于图片读取、修改和写入
+
+# 日志记录
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] } # 用于配置日志输出
+
+# Base64 编码 (用于背景替换后将图片传给前端)
+base64 = "0.22"
+
+# Axum multipart 需要的额外依赖 (通常 axum 会带入，但明确写出更清晰)
+bytes = "1.6"
+futures-util = "0.3"
+# --- 工具依赖结束 ---

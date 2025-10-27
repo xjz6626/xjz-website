@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}实用工具{% endblock %}
+
+{% block content %}
+    <h1>实用小工具 🛠️</h1>
+    <p>这里提供一些我日常需要用到的小工具。</p>
+
+    <div class="card tool-card">
+        <h2>1. 图片大小调整 (KB)</h2>
+        <p>上传图片 (仅支持 JPEG/PNG)，指定目标文件大小 (KB)，工具会尝试通过调整 JPEG 质量来压缩图片到接近的大小 (PNG 压缩效果有限)。</p>
+        <form id="resize-form"> {/* Removed enctype, JS will handle it */}
+            <div>
+                <label for="resize-image">选择图片:</label>
+                <input type="file" id="resize-image" name="image" accept="image/jpeg, image/png" required>
+            </div>
+            <div>
+                <label for="target-size">目标大小 (KB):</label>
+                <input type="number" id="target-size" name="target_size_kb" min="1" required step="1">
+            </div>
+            <button type="submit" class="btn">开始调整</button>
+        </form>
+        <div id="resize-loading" class="tool-loading" style="display: none;">
+            <div class="spinner"></div> 处理中，请稍候...
+        </div>
+        <div id="resize-result" class="tool-result"></div>
+    </div>
+
+    <div class="card tool-card">
+        <h2>2. 证件照背景更换</h2>
+        <p>上传证件照 (仅支持 JPEG/PNG)，选择或输入当前背景色和目标背景色。效果取决于背景的纯净度。</p>
+        <form id="bg-change-form"> {/* Removed enctype */}
+            <div>
+                <label for="bg-image">选择证件照:</label>
+                <input type="file" id="bg-image" name="image" accept="image/jpeg, image/png" required>
+            </div>
+            <div class="color-picker-container">
+                <label for="original-color">原背景色:</label>
+                <input type="color" id="original-color" name="original_color" value="#0000ff">
+                <select onchange="document.getElementById('original-color').value = this.value; this.style.backgroundColor = this.value;">
+                    <option value="#0000ff" style="background-color: #0000ff;">蓝色</option>
+                    <option value="#ffffff" style="background-color: #ffffff;">白色</option>
+                    <option value="#ff0000" style="background-color: #ff0000;">红色</option>
+                    <option value="#cccccc" style="background-color: #cccccc;">灰色</option>
+                </select>
+            </div>
+             <div class="color-picker-container">
+                <label for="target-color">新背景色:</label>
+                <input type="color" id="target-color" name="target_color" value="#ffffff">
+                 <select onchange="document.getElementById('target-color').value = this.value; this.style.backgroundColor = this.value;">
+                    <option value="#ffffff" style="background-color: #ffffff;">白色</option>
+                    <option value="#0000ff" style="background-color: #0000ff;">蓝色</option>
+                    <option value="#ff0000" style="background-color: #ff0000;">红色</option>
+                    <option value="#cccccc" style="background-color: #cccccc;">灰色</option>
+                </select>
+            </div>
+            <div>
+                <label for="tolerance">颜色容差 (0-100):</label>
+                <input type="number" id="tolerance" name="tolerance" min="0" max="100" value="30" step="1">
+                 <small>数值越大，替换范围越广，但也可能误伤主体。</small>
+            </div>
+            <button type="submit" class="btn">更换背景</button>
+        </form>
+        <div id="bg-change-loading" class="tool-loading" style="display: none;">
+             <div class="spinner"></div> 处理中，请稍候...
+        </div>
+        <div id="bg-change-result" class="tool-result"></div>
+    </div>
+
+    <div class="card tool-card">
+        <h2>3. IP 地址查询</h2>
+        <p>显示你当前的公网 IP 地址 (可能受代理影响)。</p>
+        <button id="get-ip-btn" class="btn">查询我的 IP</button>
+         <div id="ip-loading" class="tool-loading" style="display: none;">
+             <div class="spinner"></div> 查询中...
+        </div>
+        <div id="ip-result" class="tool-result"></div>
+    </div>
+
+    <style>
+        .tool-card { margin-bottom: 2rem; }
+        .tool-card h2 { margin-bottom: 0.5rem; }
+        .tool-card p { text-align: left; max-width: none; margin-bottom: 1.5rem; }
+        .tool-card form div { margin-bottom: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem;}
+        .tool-card label { display: inline-block; min-width: 120px; font-weight: 500; margin-bottom: 0; /* Adjusted */}
+        .tool-card input[type="file"],
+        .tool-card input[type="number"],
+        .tool-card input[type="color"],
+        .tool-card select {
+            padding: 0.6rem 0.8rem; /* Increased padding */
+            border: 1px solid var(--border-color);
+            border-radius: 6px; /* Slightly more rounded */
+            background-color: var(--bg-secondary); /* Lighter background */
+            color: var(--text-dark);
+            font-size: 0.95rem; /* Slightly larger font */
+            flex-grow: 1; /* Allow input to grow */
+            max-width: 300px; /* Limit max width */
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+         .tool-card input[type="color"] {
+            padding: 0.2rem; /* Reduced padding for color input */
+            height: 40px; /* Fixed height */
+            min-width: 50px;
+            max-width: 60px; /* Fixed width */
+            flex-grow: 0;
+        }
+        .tool-card select {
+             cursor: pointer;
+             max-width: 150px; /* Limit select width */
+             flex-grow: 0;
+        }
+        .tool-card input:focus, .tool-card select:focus {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); /* Subtle focus ring */
+        }
+        .tool-card small { color: var(--text-light); font-size: 0.85rem; width: 100%; margin-left: 130px; /* Align with inputs */}
+
+        .color-picker-container { display: flex; align-items: center; gap: 0.5rem; }
+        .color-picker-container label { margin-bottom: 0; } /* Remove bottom margin for labels in this container */
+
+        .tool-result { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
+        .tool-result img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px; /* Added border-radius */
+            display: block; /* Ensure img is block for centering */
+            margin-left: auto;
+            margin-right: auto; /* Center image */
+        }
+        .tool-result a.btn { display: inline-block; margin-top: 1rem; }
+        .tool-result p { margin-top: 1rem; font-weight: bold; text-align: center; } /* Center result text */
+        .tool-result .info { font-weight: normal; color: var(--text-light); font-size: 0.9rem; } /* Style for file size info */
+
+         /* Loading indicator style */
+        .tool-loading {
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+        /* Reusing spinner animation from base styles */
+        .tool-loading .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        /* Keyframes for spin are assumed to be in style.css */
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .tool-card form div { flex-direction: column; align-items: flex-start; }
+            .tool-card label { min-width: auto; margin-bottom: 0.5rem; }
+             .tool-card input[type="file"],
+            .tool-card input[type="number"],
+            .tool-card select,
+            .tool-card input[type="color"] { max-width: 100%; } /* Full width on small screens */
+            .tool-card small { margin-left: 0; }
+            .color-picker-container { flex-direction: row; align-items: center; width: 100%;} /* Keep color picker row layout */
+            .color-picker-container label { margin-bottom: 0;}
+        }
+
+    </style>
+
+    <script>
+        // Helper function to display errors
+        function displayError(element, message) {
+            element.innerHTML = `<p style="color: #dc2626; text-align: center;">❌ 错误: ${message}</p>`;
+        }
+
+        // Helper function to display success messages or results
+        function displayResult(element, htmlContent) {
+            element.innerHTML = htmlContent;
+        }
+
+        // --- 图片大小调整逻辑 ---
+        const resizeForm = document.getElementById('resize-form');
+        const resizeResult = document.getElementById('resize-result');
+        const resizeLoading = document.getElementById('resize-loading');
+        const resizeImageInput = document.getElementById('resize-image');
+        const resizeTargetInput = document.getElementById('target-size');
+
+        resizeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!resizeImageInput.files || resizeImageInput.files.length === 0) {
+                displayError(resizeResult, "请先选择一个图片文件。");
+                return;
+            }
+            if (!resizeTargetInput.value || parseInt(resizeTargetInput.value) <= 0) {
+                 displayError(resizeResult, "请输入一个有效的目标大小 (KB)。");
+                return;
+            }
+
+
+            resizeLoading.style.display = 'flex'; // Show loading indicator
+            resizeResult.innerHTML = ''; // Clear previous result
+
+            const formData = new FormData();
+            formData.append('image', resizeImageInput.files[0]);
+            const targetSizeKb = resizeTargetInput.value;
+            const url = `/tools/resize-image?target_size_kb=${encodeURIComponent(targetSizeKb)}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`服务器返回错误 ${response.status}: ${errorText || '未知错误'}`);
+                }
+
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                const originalFileName = resizeImageInput.files[0].name;
+                // Basic extension extraction, might need improvement for complex names
+                const extension = originalFileName.includes('.') ? originalFileName.split('.').pop() : 'jpg';
+                 // Determine output extension based on mime type if possible
+                let outputExtension = 'jpg'; // Default to jpg
+                if (blob.type === 'image/png') {
+                    outputExtension = 'png';
+                } else if (blob.type === 'image/jpeg') {
+                    outputExtension = 'jpg';
+                }
+
+
+                const baseFileName = originalFileName.includes('.') ? originalFileName.substring(0, originalFileName.lastIndexOf('.')) : originalFileName;
+                const newFileName = `${baseFileName}_resized_${targetSizeKb}kb.${outputExtension}`;
+                const fileSizeKB = (blob.size / 1024).toFixed(2);
+
+                const resultHtml = `
+                    <p>✅ 调整成功 (目标 ${targetSizeKb} KB):</p>
+                    <img src="${imageUrl}" alt="调整后的图片">
+                    <p class="info">实际文件大小: ${fileSizeKB} KB</p>
+                    <a href="${imageUrl}" download="${newFileName}" class="btn btn-secondary">下载图片</a>
+                `;
+                displayResult(resizeResult, resultHtml);
+
+            } catch (error) {
+                 console.error("图片调整出错:", error);
+                 displayError(resizeResult, error.message || "调整过程中发生未知错误。");
+            } finally {
+                resizeLoading.style.display = 'none'; // Hide loading indicator
+            }
+        });
+
+        // --- 背景更换逻辑 ---
+        const bgChangeForm = document.getElementById('bg-change-form');
+        const bgChangeResult = document.getElementById('bg-change-result');
+        const bgChangeLoading = document.getElementById('bg-change-loading');
+        const bgImageInput = document.getElementById('bg-image');
+        const originalColorInput = document.getElementById('original-color');
+        const targetColorInput = document.getElementById('target-color');
+        const toleranceInput = document.getElementById('tolerance');
+
+        bgChangeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+             if (!bgImageInput.files || bgImageInput.files.length === 0) {
+                displayError(bgChangeResult, "请先选择一个证件照文件。");
+                return;
+            }
+             if (!toleranceInput.value || parseInt(toleranceInput.value) < 0 || parseInt(toleranceInput.value) > 100) {
+                 displayError(bgChangeResult, "请输入有效的颜色容差 (0-100)。");
+                return;
+            }
+
+
+            bgChangeLoading.style.display = 'flex'; // Show loading
+            bgChangeResult.innerHTML = ''; // Clear result
+
+            const formData = new FormData();
+            formData.append('image', bgImageInput.files[0]);
+
+            const originalColor = originalColorInput.value;
+            const targetColor = targetColorInput.value;
+            const tolerance = toleranceInput.value;
+            const url = `/tools/change-background?original_color=${encodeURIComponent(originalColor)}&target_color=${encodeURIComponent(targetColor)}&tolerance=${encodeURIComponent(tolerance)}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`服务器返回错误 ${response.status}: ${errorText || '未知错误'}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success && result.imageData) {
+                     const originalFileName = bgImageInput.files[0].name;
+                     // Extract base name and attempt to keep original extension if possible from data URL
+                     const baseFileName = originalFileName.includes('.') ? originalFileName.substring(0, originalFileName.lastIndexOf('.')) : originalFileName;
+                     let outputExtension = 'png'; // Default to png for background changes
+                     const mimeMatch = result.imageData.match(/^data:(image\/(\w+));base64,/);
+                     if(mimeMatch && mimeMatch[2]) {
+                         outputExtension = mimeMatch[2] === 'jpeg' ? 'jpg' : mimeMatch[2];
+                     }
+                    const newFileName = `${baseFileName}_bg_changed.${outputExtension}`;
+
+                    const resultHtml = `
+                        <p>✅ 背景更换成功:</p>
+                        <img src="${result.imageData}" alt="背景更换后的图片">
+                         <a href="${result.imageData}" download="${newFileName}" class="btn btn-secondary">下载图片</a>
+                    `;
+                    displayResult(bgChangeResult, resultHtml);
+                } else {
+                    throw new Error(result.message || '后端处理失败，未返回有效图片数据。');
+                }
+
+            } catch (error) {
+                 console.error("背景更换出错:", error);
+                 displayError(bgChangeResult, error.message || '背景更换过程中发生未知错误。');
+            } finally {
+                bgChangeLoading.style.display = 'none'; // Hide loading
+            }
+        });
+
+        // --- IP 查询逻辑 ---
+        const getIpBtn = document.getElementById('get-ip-btn');
+        const ipResult = document.getElementById('ip-result');
+        const ipLoading = document.getElementById('ip-loading');
+
+        getIpBtn.addEventListener('click', async () => {
+            ipLoading.style.display = 'flex'; // Show loading
+            ipResult.innerHTML = ''; // Clear result
+            try {
+                const response = await fetch('/api/tools/my-ip');
+                if (!response.ok) {
+                    throw new Error(`查询失败: ${response.status} ${response.statusText || ''}`);
+                }
+                const data = await response.json();
+                 if (data.ip) {
+                    displayResult(ipResult, `<p>🌍 你的 IP 地址是: <strong>${data.ip}</strong></p>`);
+                 } else {
+                     throw new Error("未能从服务器获取 IP 地址。");
+                 }
+
+            } catch (error) {
+                console.error("IP 查询出错:", error);
+                displayError(ipResult, error.message || '查询 IP 地址时发生未知错误。');
+            } finally {
+                ipLoading.style.display = 'none'; // Hide loading
+            }
+        });
+
+         // --- Style select based on color input change ---
+         document.getElementById('original-color').addEventListener('input', (e) => {
+             const select = e.target.nextElementSibling; // Get the sibling select element
+             if (select && select.tagName === 'SELECT') {
+                 select.style.backgroundColor = e.target.value;
+                 // Optionally reset select value if custom color is chosen
+                 // select.value = ''; // Or find a 'custom' option if you add one
+             }
+         });
+         document.getElementById('target-color').addEventListener('input', (e) => {
+             const select = e.target.nextElementSibling;
+             if (select && select.tagName === 'SELECT') {
+                 select.style.backgroundColor = e.target.value;
+             }
+         });
+         // Initialize select backgrounds on load
+         document.querySelectorAll('select[onchange*="backgroundColor"]').forEach(select => {
+            select.style.backgroundColor = select.value;
+         });
+
+
+    </script>
+
+{% endblock %}
