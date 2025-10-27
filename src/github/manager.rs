@@ -323,7 +323,7 @@ impl GitHubDataManager {
             user_stats,
             language_stats: None, // 后续可以实现
             last_updated: now,
-            next_update: now + chrono::Duration::days(3),
+            next_update: now + chrono::Duration::days(1),
         };
 
         // 保存数据

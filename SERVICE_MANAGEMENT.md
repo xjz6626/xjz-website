@@ -59,7 +59,13 @@ sudo journalctl -u xjz-website -n 50
 - **本地访问**: http://localhost:8181
 - **局域网访问**: http://[你的内网IP]:8181
 
-## 📝 服务配置详情
+## 📝 自动更新机制
+
+网站会自动检查和更新GitHub数据：
+- **更新频率**: 每1天自动检查一次
+- **触发方式**: 当访问API时自动检查数据是否过期
+- **数据内容**: 项目信息、README文档、用户统计等
+- **缓存策略**: 未过期时使用本地缓存，提高响应速度
 
 服务配置文件位于 `/etc/systemd/system/xjz-website.service`：
 
@@ -152,6 +158,32 @@ sudo ufw allow 8181/tcp
 1. 检查可执行文件权限：`ls -la /home/xjz/workplace/xjz-website/target/release/xjz_website`
 2. 查看详细错误日志：`sudo journalctl -u xjz-website -n 100`
 3. 检查端口是否被占用：`sudo netstat -tlnp | grep 8181`
+
+### SELinux权限问题 ⚠️
+如果看到 "Permission denied" 错误，可能是SELinux问题：
+
+**症状**: 
+- 服务状态显示 `activating (auto-restart)`
+- 日志显示 `Permission denied` 和 `exit-code 203/EXEC`
+
+**解决方法**:
+```bash
+# 方法1: 使用修复脚本
+./fix_selinux.sh
+
+# 方法2: 手动修复
+sudo chcon -t bin_t /home/xjz/workplace/xjz-website/target/release/xjz_website
+sudo systemctl restart xjz-website
+```
+
+**验证修复**:
+```bash
+# 检查SELinux上下文 (应该显示 bin_t)
+ls -Z /home/xjz/workplace/xjz-website/target/release/xjz_website
+
+# 检查服务状态 (应该显示 active (running))
+sudo systemctl status xjz-website
+```
 
 ### GitHub API 401错误
 1. 检查Token是否过期
