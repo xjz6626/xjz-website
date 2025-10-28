@@ -13,13 +13,14 @@ use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt}; // 日志
 
+
 // 引入模块
 mod github;
 mod tools; // 声明 tools 模块
 
 // 使用模块中的内容
 use github::{GitHubDataManager, StoredArticle, StoredProject};
-use crate::tools::{handle_change_background, handle_get_ip, handle_resize_image}; // 从 tools 模块导入处理函数
+use crate::tools::{handle_change_background, handle_get_ip, handle_resize_image, handle_get_fake_identity}; // <-- 添加 handle_get_fake_identity
 
 // === 模板定义 ===
 #[derive(Template)]
@@ -306,6 +307,7 @@ async fn main() {
         .route("/tools/resize-image", post(handle_resize_image)) // 图片大小调整
         .route("/tools/change-background", post(handle_change_background)) // 背景更换
         .route("/api/tools/my-ip", get(handle_get_ip)) // IP 查询
+        .route("/api/tools/fake-identity", get(handle_get_fake_identity)) // <-- 新增 虚假身份生成
         // 静态文件服务 (放在最后作为 fallback)
         .fallback_service(assets_service);
 

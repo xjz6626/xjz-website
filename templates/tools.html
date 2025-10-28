@@ -8,8 +8,8 @@
 
     <div class="card tool-card">
         <h2>1. 图片大小调整 (KB)</h2>
-        <p>上传图片 (仅支持 JPEG/PNG)，指定目标文件大小 (KB)，工具会尝试通过调整 JPEG 质量来压缩图片到接近的大小 (PNG 压缩效果有限)。</p>
-        <form id="resize-form"> {/* Removed enctype, JS will handle it */}
+        <p>上传图片 (JPEG/PNG)，指定目标大小 (KB) 和输出格式。工具会尝试压缩 (JPEG质量/PNG量化) 或填充以达到目标。</p>
+        <form id="resize-form">
             <div>
                 <label for="resize-image">选择图片:</label>
                 <input type="file" id="resize-image" name="image" accept="image/jpeg, image/png" required>
@@ -17,6 +17,14 @@
             <div>
                 <label for="target-size">目标大小 (KB):</label>
                 <input type="number" id="target-size" name="target_size_kb" min="1" required step="1">
+            </div>
+            <div>
+                <label for="output-format">输出格式:</label>
+                <select id="output-format" name="output_format">
+                    <option value="auto" selected>自动 (同输入)</option>
+                    <option value="jpeg">JPEG</option>
+                    <option value="png">PNG</option>
+                </select>
             </div>
             <button type="submit" class="btn">开始调整</button>
         </form>
@@ -28,21 +36,11 @@
 
     <div class="card tool-card">
         <h2>2. 证件照背景更换</h2>
-        <p>上传证件照 (仅支持 JPEG/PNG)，选择或输入当前背景色和目标背景色。效果取决于背景的纯净度。</p>
-        <form id="bg-change-form"> {/* Removed enctype */}
+        <p>上传证件照 (JPEG/PNG)，选择目标背景色。工具将**自动移除背景**并替换为指定颜色（或透明）。</p>
+        <form id="bg-change-form">
             <div>
                 <label for="bg-image">选择证件照:</label>
                 <input type="file" id="bg-image" name="image" accept="image/jpeg, image/png" required>
-            </div>
-            <div class="color-picker-container">
-                <label for="original-color">原背景色:</label>
-                <input type="color" id="original-color" name="original_color" value="#0000ff">
-                <select onchange="document.getElementById('original-color').value = this.value; this.style.backgroundColor = this.value;">
-                    <option value="#0000ff" style="background-color: #0000ff;">蓝色</option>
-                    <option value="#ffffff" style="background-color: #ffffff;">白色</option>
-                    <option value="#ff0000" style="background-color: #ff0000;">红色</option>
-                    <option value="#cccccc" style="background-color: #cccccc;">灰色</option>
-                </select>
             </div>
              <div class="color-picker-container">
                 <label for="target-color">新背景色:</label>
@@ -53,11 +51,6 @@
                     <option value="#ff0000" style="background-color: #ff0000;">红色</option>
                     <option value="#cccccc" style="background-color: #cccccc;">灰色</option>
                 </select>
-            </div>
-            <div>
-                <label for="tolerance">颜色容差 (0-100):</label>
-                <input type="number" id="tolerance" name="tolerance" min="0" max="100" value="30" step="1">
-                 <small>数值越大，替换范围越广，但也可能误伤主体。</small>
             </div>
             <button type="submit" class="btn">更换背景</button>
         </form>
@@ -77,304 +70,302 @@
         <div id="ip-result" class="tool-result"></div>
     </div>
 
+    <div class="card tool-card">
+        <h2>4. 美国虚拟身份生成器</h2>
+        <p>生成用于网站注册的美国虚拟个人信息。</p>
+        <form id="fake-id-form">
+            <button type="submit" class="btn">生成信息</button>
+        </form>
+        <div id="fake-id-loading" class="tool-loading" style="display: none;">
+            <div class="spinner"></div> 生成中...
+        </div>
+        <div id="fake-id-result" class="tool-result"></div>
+    </div>
+
+
     <style>
+        /* ... 所有样式保持不变 ... */
         .tool-card { margin-bottom: 2rem; }
         .tool-card h2 { margin-bottom: 0.5rem; }
         .tool-card p { text-align: left; max-width: none; margin-bottom: 1.5rem; }
         .tool-card form div { margin-bottom: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem;}
-        .tool-card label { display: inline-block; min-width: 120px; font-weight: 500; margin-bottom: 0; /* Adjusted */}
+        /* *** 修改点: 确保标签在没有下拉菜单时也能对齐 *** */
+        .tool-card form div:has(> button) { margin-bottom: 0; } /* 减少只有按钮的行的底部边距 */
+        .tool-card label { display: inline-block; min-width: 120px; font-weight: 500; margin-bottom: 0; }
         .tool-card input[type="file"],
         .tool-card input[type="number"],
         .tool-card input[type="color"],
         .tool-card select {
-            padding: 0.6rem 0.8rem; /* Increased padding */
+            padding: 0.6rem 0.8rem;
             border: 1px solid var(--border-color);
-            border-radius: 6px; /* Slightly more rounded */
-            background-color: var(--bg-secondary); /* Lighter background */
+            border-radius: 6px;
+            background-color: var(--bg-secondary);
             color: var(--text-dark);
-            font-size: 0.95rem; /* Slightly larger font */
-            flex-grow: 1; /* Allow input to grow */
-            max-width: 300px; /* Limit max width */
+            font-size: 0.95rem;
+            flex-grow: 1;
+            max-width: 300px;
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
          .tool-card input[type="color"] {
-            padding: 0.2rem; /* Reduced padding for color input */
-            height: 40px; /* Fixed height */
+            padding: 0.2rem;
+            height: 40px;
             min-width: 50px;
-            max-width: 60px; /* Fixed width */
+            max-width: 60px;
             flex-grow: 0;
         }
         .tool-card select {
              cursor: pointer;
-             max-width: 150px; /* Limit select width */
+             max-width: 150px; /* 调整或移除 */
              flex-grow: 0;
         }
         .tool-card input:focus, .tool-card select:focus {
              outline: none;
              border-color: var(--primary-color);
-             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); /* Subtle focus ring */
+             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
         }
-        .tool-card small { color: var(--text-light); font-size: 0.85rem; width: 100%; margin-left: 130px; /* Align with inputs */}
+        .tool-card small { color: var(--text-light); font-size: 0.85rem; width: 100%; margin-left: 130px; }
 
         .color-picker-container { display: flex; align-items: center; gap: 0.5rem; }
-        .color-picker-container label { margin-bottom: 0; } /* Remove bottom margin for labels in this container */
+        .color-picker-container label { margin-bottom: 0; }
 
         .tool-result { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
         .tool-result img {
-            max-width: 100%;
-            height: auto;
-            margin-top: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px; /* Added border-radius */
-            display: block; /* Ensure img is block for centering */
-            margin-left: auto;
-            margin-right: auto; /* Center image */
+            max-width: 100%; height: auto; margin-top: 1rem; border: 1px solid var(--border-color);
+            border-radius: 4px; display: block; margin-left: auto; margin-right: auto;
         }
         .tool-result a.btn { display: inline-block; margin-top: 1rem; }
-        .tool-result p { margin-top: 1rem; font-weight: bold; text-align: center; } /* Center result text */
-        .tool-result .info { font-weight: normal; color: var(--text-light); font-size: 0.9rem; } /* Style for file size info */
+        .tool-result p { margin-top: 1rem; font-weight: bold; text-align: center; }
+        .tool-result .info { font-weight: normal; color: var(--text-light); font-size: 0.9rem; }
 
-         /* Loading indicator style */
         .tool-loading {
-            margin-top: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            color: var(--text-light);
-            font-style: italic;
+            margin-top: 1.5rem; display: flex; align-items: center; justify-content: center;
+            gap: 0.5rem; color: var(--text-light); font-style: italic;
         }
-        /* Reusing spinner animation from base styles */
         .tool-loading .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid var(--border-color);
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
+            width: 20px; height: 20px; border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color); border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        /* Keyframes for spin are assumed to be in style.css */
 
-        /* Responsive adjustments */
+        /* 虚拟身份结果样式 */
+        .fake-id-grid {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 0.8rem 1rem;
+            text-align: left;
+            font-size: 0.95rem;
+            word-break: break-all;
+        }
+        .fake-id-grid strong {
+            font-weight: 500;
+            color: var(--text-light);
+            text-align: right;
+        }
+        .fake-id-grid span {
+            color: var(--text-dark);
+            background-color: var(--bg-secondary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
         @media (max-width: 600px) {
             .tool-card form div { flex-direction: column; align-items: flex-start; }
             .tool-card label { min-width: auto; margin-bottom: 0.5rem; }
-             .tool-card input[type="file"],
-            .tool-card input[type="number"],
-            .tool-card select,
-            .tool-card input[type="color"] { max-width: 100%; } /* Full width on small screens */
+             .tool-card input[type="file"], .tool-card input[type="number"],
+             .tool-card select, .tool-card input[type="color"] { max-width: 100%; }
             .tool-card small { margin-left: 0; }
-            .color-picker-container { flex-direction: row; align-items: center; width: 100%;} /* Keep color picker row layout */
+            .color-picker-container { flex-direction: row; align-items: center; width: 100%;}
             .color-picker-container label { margin-bottom: 0;}
-        }
 
+            /* 虚拟身份响应式样式 */
+            .fake-id-grid {
+                grid-template-columns: 100px 1fr;
+            }
+            .fake-id-grid strong {
+                text-align: left;
+            }
+        }
     </style>
 
     <script>
-        // Helper function to display errors
-        function displayError(element, message) {
-            element.innerHTML = `<p style="color: #dc2626; text-align: center;">❌ 错误: ${message}</p>`;
-        }
+        // Helper functions displayError, displayResult (保持不变)
+        function displayError(element, message) { element.innerHTML = `<p style="color: #dc2626; text-align: center;">❌ 错误: ${message}</p>`; }
+        function displayResult(element, htmlContent) { element.innerHTML = htmlContent; }
 
-        // Helper function to display success messages or results
-        function displayResult(element, htmlContent) {
-            element.innerHTML = htmlContent;
-        }
-
-        // --- 图片大小调整逻辑 ---
+        // --- 图片大小调整逻辑 (保持不变) ---
         const resizeForm = document.getElementById('resize-form');
         const resizeResult = document.getElementById('resize-result');
         const resizeLoading = document.getElementById('resize-loading');
         const resizeImageInput = document.getElementById('resize-image');
         const resizeTargetInput = document.getElementById('target-size');
+        const outputFormatSelect = document.getElementById('output-format');
 
         resizeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!resizeImageInput.files || resizeImageInput.files.length === 0) {
-                displayError(resizeResult, "请先选择一个图片文件。");
-                return;
-            }
-            if (!resizeTargetInput.value || parseInt(resizeTargetInput.value) <= 0) {
-                 displayError(resizeResult, "请输入一个有效的目标大小 (KB)。");
-                return;
-            }
+             if (!resizeImageInput.files || resizeImageInput.files.length === 0) { displayError(resizeResult, "请先选择一个图片文件。"); return; }
+             if (!resizeTargetInput.value || parseInt(resizeTargetInput.value) <= 0) { displayError(resizeResult, "请输入一个有效的目标大小 (KB)。"); return; }
 
-
-            resizeLoading.style.display = 'flex'; // Show loading indicator
-            resizeResult.innerHTML = ''; // Clear previous result
-
+            resizeLoading.style.display = 'flex';
+            resizeResult.innerHTML = '';
             const formData = new FormData();
             formData.append('image', resizeImageInput.files[0]);
             const targetSizeKb = resizeTargetInput.value;
-            const url = `/tools/resize-image?target_size_kb=${encodeURIComponent(targetSizeKb)}`;
+            const outputFormat = outputFormatSelect.value;
+            const url = `/tools/resize-image?target_size_kb=${encodeURIComponent(targetSizeKb)}&output_format=${encodeURIComponent(outputFormat)}`;
 
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`服务器返回错误 ${response.status}: ${errorText || '未知错误'}`);
-                }
-
-                const blob = await response.blob();
-                const imageUrl = URL.createObjectURL(blob);
-                const originalFileName = resizeImageInput.files[0].name;
-                // Basic extension extraction, might need improvement for complex names
-                const extension = originalFileName.includes('.') ? originalFileName.split('.').pop() : 'jpg';
-                 // Determine output extension based on mime type if possible
-                let outputExtension = 'jpg'; // Default to jpg
-                if (blob.type === 'image/png') {
-                    outputExtension = 'png';
-                } else if (blob.type === 'image/jpeg') {
-                    outputExtension = 'jpg';
-                }
-
-
-                const baseFileName = originalFileName.includes('.') ? originalFileName.substring(0, originalFileName.lastIndexOf('.')) : originalFileName;
-                const newFileName = `${baseFileName}_resized_${targetSizeKb}kb.${outputExtension}`;
-                const fileSizeKB = (blob.size / 1024).toFixed(2);
-
-                const resultHtml = `
-                    <p>✅ 调整成功 (目标 ${targetSizeKb} KB):</p>
-                    <img src="${imageUrl}" alt="调整后的图片">
-                    <p class="info">实际文件大小: ${fileSizeKB} KB</p>
-                    <a href="${imageUrl}" download="${newFileName}" class="btn btn-secondary">下载图片</a>
-                `;
-                displayResult(resizeResult, resultHtml);
-
+                 const response = await fetch(url, { method: 'POST', body: formData });
+                 if (!response.ok) { const errorText = await response.text(); throw new Error(`服务器返回错误 ${response.status}: ${errorText || '未知错误'}`); }
+                 const blob = await response.blob();
+                 const imageUrl = URL.createObjectURL(blob);
+                 const originalFileName = resizeImageInput.files[0].name;
+                 let outputExtension = 'bin';
+                 if (blob.type === 'image/png') outputExtension = 'png';
+                 else if (blob.type === 'image/jpeg') outputExtension = 'jpg';
+                 const baseFileName = originalFileName.includes('.') ? originalFileName.substring(0, originalFileName.lastIndexOf('.')) : originalFileName;
+                 const newFileName = `${baseFileName}_${targetSizeKb}kb.${outputExtension}`;
+                 const fileSizeKB = (blob.size / 1024).toFixed(2);
+                 const resultHtml = ` <p>✅ 处理成功 (目标 ${targetSizeKb} KB):</p> <img src="${imageUrl}" alt="处理后的图片"> <p class="info">实际文件大小: ${fileSizeKB} KB</p> <p class="info">输出格式: ${outputExtension.toUpperCase()}</p> <a href="${imageUrl}" download="${newFileName}" class="btn btn-secondary">下载图片</a> `;
+                 displayResult(resizeResult, resultHtml);
             } catch (error) {
                  console.error("图片调整出错:", error);
                  displayError(resizeResult, error.message || "调整过程中发生未知错误。");
             } finally {
-                resizeLoading.style.display = 'none'; // Hide loading indicator
+                resizeLoading.style.display = 'none';
             }
         });
 
-        // --- 背景更换逻辑 ---
+        // --- 背景更换逻辑 (remove.bg 版本) ---
         const bgChangeForm = document.getElementById('bg-change-form');
         const bgChangeResult = document.getElementById('bg-change-result');
         const bgChangeLoading = document.getElementById('bg-change-loading');
         const bgImageInput = document.getElementById('bg-image');
-        const originalColorInput = document.getElementById('original-color');
         const targetColorInput = document.getElementById('target-color');
-        const toleranceInput = document.getElementById('tolerance');
 
         bgChangeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-             if (!bgImageInput.files || bgImageInput.files.length === 0) {
-                displayError(bgChangeResult, "请先选择一个证件照文件。");
-                return;
-            }
-             if (!toleranceInput.value || parseInt(toleranceInput.value) < 0 || parseInt(toleranceInput.value) > 100) {
-                 displayError(bgChangeResult, "请输入有效的颜色容差 (0-100)。");
-                return;
-            }
+             if (!bgImageInput.files || bgImageInput.files.length === 0) { displayError(bgChangeResult, "请先选择一个证件照文件。"); return; }
 
-
-            bgChangeLoading.style.display = 'flex'; // Show loading
-            bgChangeResult.innerHTML = ''; // Clear result
-
+            bgChangeLoading.style.display = 'flex';
+            bgChangeResult.innerHTML = '';
             const formData = new FormData();
             formData.append('image', bgImageInput.files[0]);
 
-            const originalColor = originalColorInput.value;
             const targetColor = targetColorInput.value;
-            const tolerance = toleranceInput.value;
-            const url = `/tools/change-background?original_color=${encodeURIComponent(originalColor)}&target_color=${encodeURIComponent(targetColor)}&tolerance=${encodeURIComponent(tolerance)}`;
+            const url = `/tools/change-background?target_color=${encodeURIComponent(targetColor)}`;
 
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`服务器返回错误 ${response.status}: ${errorText || '未知错误'}`);
-                }
-
-                const result = await response.json();
-
-                if (result.success && result.imageData) {
+                 const response = await fetch(url, { method: 'POST', body: formData });
+                 if (!response.ok) { const errorText = await response.text(); throw new Error(`服务器返回错误 ${response.status}: ${errorText || '未知错误'}`); }
+                 const result = await response.json();
+                 if (result.success && result.imageData) {
                      const originalFileName = bgImageInput.files[0].name;
-                     // Extract base name and attempt to keep original extension if possible from data URL
                      const baseFileName = originalFileName.includes('.') ? originalFileName.substring(0, originalFileName.lastIndexOf('.')) : originalFileName;
-                     let outputExtension = 'png'; // Default to png for background changes
+                     let outputExtension = 'png';
                      const mimeMatch = result.imageData.match(/^data:(image\/(\w+));base64,/);
-                     if(mimeMatch && mimeMatch[2]) {
-                         outputExtension = mimeMatch[2] === 'jpeg' ? 'jpg' : mimeMatch[2];
-                     }
-                    const newFileName = `${baseFileName}_bg_changed.${outputExtension}`;
-
-                    const resultHtml = `
-                        <p>✅ 背景更换成功:</p>
-                        <img src="${result.imageData}" alt="背景更换后的图片">
-                         <a href="${result.imageData}" download="${newFileName}" class="btn btn-secondary">下载图片</a>
-                    `;
+                     if(mimeMatch && mimeMatch[2]) { outputExtension = mimeMatch[2] === 'jpeg' ? 'jpg' : mimeMatch[2]; }
+                     const newFileName = `${baseFileName}_bg_changed.${outputExtension}`;
+                     const resultHtml = ` <p>✅ 背景更换成功:</p> <img src="${result.imageData}" alt="背景更换后的图片"> <a href="${result.imageData}" download="${newFileName}" class="btn btn-secondary">下载图片</a> `;
                     displayResult(bgChangeResult, resultHtml);
-                } else {
-                    throw new Error(result.message || '后端处理失败，未返回有效图片数据。');
-                }
-
+                } else { throw new Error(result.message || '后端处理失败，未返回有效图片数据。'); }
             } catch (error) {
                  console.error("背景更换出错:", error);
                  displayError(bgChangeResult, error.message || '背景更换过程中发生未知错误。');
             } finally {
-                bgChangeLoading.style.display = 'none'; // Hide loading
+                bgChangeLoading.style.display = 'none';
             }
         });
 
-        // --- IP 查询逻辑 ---
+        // --- IP 查询逻辑 (保持不变) ---
         const getIpBtn = document.getElementById('get-ip-btn');
         const ipResult = document.getElementById('ip-result');
         const ipLoading = document.getElementById('ip-loading');
 
         getIpBtn.addEventListener('click', async () => {
-            ipLoading.style.display = 'flex'; // Show loading
-            ipResult.innerHTML = ''; // Clear result
+             ipLoading.style.display = 'flex';
+             ipResult.innerHTML = '';
             try {
-                const response = await fetch('/api/tools/my-ip');
-                if (!response.ok) {
-                    throw new Error(`查询失败: ${response.status} ${response.statusText || ''}`);
-                }
-                const data = await response.json();
-                 if (data.ip) {
-                    displayResult(ipResult, `<p>🌍 你的 IP 地址是: <strong>${data.ip}</strong></p>`);
-                 } else {
-                     throw new Error("未能从服务器获取 IP 地址。");
-                 }
-
+                 const response = await fetch('/api/tools/my-ip');
+                 if (!response.ok) { throw new Error(`查询失败: ${response.status} ${response.statusText || ''}`); }
+                 const data = await response.json();
+                 if (data.ip) { displayResult(ipResult, `<p>🌍 你的 IP 地址是: <strong>${data.ip}</strong></p>`); }
+                 else { throw new Error("未能从服务器获取 IP 地址。"); }
             } catch (error) {
-                console.error("IP 查询出错:", error);
-                displayError(ipResult, error.message || '查询 IP 地址时发生未知错误。');
+                 console.error("IP 查询出错:", error);
+                 displayError(ipResult, error.message || '查询 IP 地址时发生未知错误。');
             } finally {
-                ipLoading.style.display = 'none'; // Hide loading
+                ipLoading.style.display = 'none';
             }
         });
 
-         // --- Style select based on color input change ---
-         document.getElementById('original-color').addEventListener('input', (e) => {
-             const select = e.target.nextElementSibling; // Get the sibling select element
-             if (select && select.tagName === 'SELECT') {
-                 select.style.backgroundColor = e.target.value;
-                 // Optionally reset select value if custom color is chosen
-                 // select.value = ''; // Or find a 'custom' option if you add one
-             }
-         });
+         // --- 保留 target-color 的事件监听 ---
          document.getElementById('target-color').addEventListener('input', (e) => {
              const select = e.target.nextElementSibling;
              if (select && select.tagName === 'SELECT') {
                  select.style.backgroundColor = e.target.value;
              }
          });
-         // Initialize select backgrounds on load
+
+         // Initialize select backgrounds on load (只初始化 target-color 的)
          document.querySelectorAll('select[onchange*="backgroundColor"]').forEach(select => {
-            select.style.backgroundColor = select.value;
+            if (select.previousElementSibling && select.previousElementSibling.id === 'target-color') {
+                 select.style.backgroundColor = select.value;
+            }
          });
 
+
+        // --- 美国虚拟身份生成器逻辑 ---
+        const fakeIdForm = document.getElementById('fake-id-form');
+        const fakeIdResult = document.getElementById('fake-id-result');
+        const fakeIdLoading = document.getElementById('fake-id-loading');
+        // *** 修改点: 移除 locale select 的引用 ***
+        // const fakeIdLocaleSelect = document.getElementById('fake-id-locale');
+
+        fakeIdForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            fakeIdLoading.style.display = 'flex';
+            fakeIdResult.innerHTML = '';
+
+            // *** 修改点: 不再读取 locale，URL 不带参数 ***
+            // const selectedLocale = fakeIdLocaleSelect.value;
+            // const url = `/api/tools/fake-identity?locale=${encodeURIComponent(selectedLocale)}`;
+            const url = `/api/tools/fake-identity`; // 直接调用，后端会生成 en_US
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`服务器返回错误 ${response.status}: ${errorText || '未知错误'}`);
+                }
+
+                const data = await response.json();
+
+                // 构建要显示的 HTML (地区现在固定为 en_US)
+                const resultHtml = `
+                    <p>✅ 生成成功 (地区: ${data.locale}):</p>
+                    <div class="fake-id-grid">
+                        <strong>姓名:</strong> <span>${data.name}</span>
+                        <strong>用户名:</strong> <span>${data.username}</span>
+                        <strong>邮箱:</strong> <span>${data.email}</span>
+                        <strong>电话:</strong> <span>${data.phone}</span>
+                        <strong>公司:</strong> <span>${data.company}</span>
+                        <strong>地址:</strong> <span>${data.address}</span>
+                    </div>
+                `;
+                displayResult(fakeIdResult, resultHtml);
+
+            } catch (error) {
+                console.error("虚拟身份生成出错:", error);
+                displayError(fakeIdResult, error.message || "生成过程中发生未知错误。");
+            } finally {
+                fakeIdLoading.style.display = 'none';
+            }
+        });
+
+
+        // --- spin 动画 keyframes 注入 (保持不变) ---
+        const styleSheet = document.styleSheets[0]; let spinKeyframesFound = false; if (styleSheet) { try { for (const rule of styleSheet.cssRules) { if (rule.type === CSSRule.KEYFRAMES_RULE && rule.name === 'spin') { spinKeyframesFound = true; break; } } } catch (e) { console.warn("Could not check for existing 'spin' keyframes:", e); } } if (!spinKeyframesFound) { const keyframes = ` @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`; if (styleSheet) { try { styleSheet.insertRule(keyframes, styleSheet.cssRules.length); } catch (e) { console.error("Failed to insert spin keyframes:", e) } } else { const styleTag = document.createElement('style'); styleTag.textContent = keyframes; document.head.appendChild(styleTag); } }
 
     </script>
 
